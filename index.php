@@ -1,19 +1,20 @@
 <?php
-require_once 'includes/config.php';
+require_once 'config/bootstrap.php';
+require_once 'models/Product.php';
 
-// Récupérer les produits en vedette
+// Initialiser le modèle Product
+$productModel = new Product($pdo);
+
+// Récupérer les produits en vedette avec le nouveau système
 $featuredProducts = [];
 try {
-    $stmt = $pdo->prepare("SELECT * FROM products WHERE status = 'active' AND featured = 1 ORDER BY created_at DESC LIMIT 8");
-    $stmt->execute();
-    $featuredProducts = $stmt->fetchAll();
-} catch (PDOException $e) {
-    // En cas d'erreur, récupérer les produits les plus récents
+    $result = $productModel->getAll(['featured' => true], 1, 8);
+    $featuredProducts = $result['products'];
+} catch (Exception $e) {
+    // En cas d'erreur, récupérer les produits populaires
     try {
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE status = 'active' ORDER BY created_at DESC LIMIT 8");
-        $stmt->execute();
-        $featuredProducts = $stmt->fetchAll();
-    } catch (PDOException $e) {
+        $featuredProducts = $productModel->getPopular(8);
+    } catch (Exception $e) {
         $featuredProducts = [];
     }
 }
