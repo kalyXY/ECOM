@@ -1,7 +1,7 @@
 <?php
 // Configuration de la base de données
 $host = 'localhost';
-$dbname = 'ecommerce_db';
+$dbname = 'stylehub_db';
 $username = 'root';
 $password = '';
 

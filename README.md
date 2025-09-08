@@ -1,225 +1,175 @@
-# E-Commerce Back-Office
+# StyleHub - Boutique de Mode en Ligne
 
-Un système de gestion e-commerce moderne avec interface d'administration professionnelle.
+StyleHub est une boutique de mode en ligne moderne et élégante, développée en PHP avec une interface d'administration complète.
 
-## 🚀 Fonctionnalités
+## 🌟 Fonctionnalités
 
-### Front-Office (Public)
-- ✅ Affichage des produits
-- ✅ Design responsive avec Bootstrap 5
-- ✅ Navigation intuitive
+### Front-Office
+- **Design moderne et responsive** adapté à la mode
+- **Catalogue de produits** avec filtres avancés (genre, catégorie, prix, couleur)
+- **Système de panier** avec gestion des quantités
+- **Pages produits détaillées** avec galerie d'images
+- **Système de favoris** (wishlist)
+- **Guide des tailles** interactif
+- **Newsletter** et contact
+- **Animations CSS** et effets visuels
 
 ### Back-Office (Admin)
-- ✅ **Dashboard moderne** avec statistiques en temps réel
-- ✅ **Gestion complète des produits** (CRUD)
-- ✅ **Upload d'images sécurisé** avec redimensionnement automatique
-- ✅ **Authentification sécurisée** avec sessions
-- ✅ **Interface responsive** et moderne
-- ✅ **Pagination intelligente**
-- ✅ **Graphiques interactifs** (Chart.js)
-- ✅ **Design professionnel** avec animations
+- **Dashboard** avec statistiques
+- **Gestion des produits** (CRUD complet)
+- **Gestion des catégories** hiérarchiques
+- **Gestion des commandes**
+- **Gestion des clients**
+- **Rapports et analytics**
+- **Interface moderne** avec sidebar responsive
 
-## 📁 Structure du projet (RÉORGANISÉE)
+## 🛠️ Technologies Utilisées
+
+- **Backend**: PHP 8.0+, MySQL/MariaDB
+- **Frontend**: HTML5, CSS3, JavaScript ES6+
+- **Framework CSS**: Bootstrap 5.3
+- **Icons**: Font Awesome 6.4
+- **Fonts**: Google Fonts (Playfair Display, Inter)
+
+## 📦 Installation
+
+1. **Cloner le projet**
+   ```bash
+   git clone [url-du-repo]
+   cd stylehub
+   ```
+
+2. **Configuration de la base de données**
+   - Créer une base de données MySQL nommée `stylehub_db`
+   - Importer le fichier `database.sql`
+   - Modifier les paramètres de connexion dans `config.php`
+
+3. **Configuration du serveur web**
+   - Pointer le document root vers le dossier du projet
+   - S'assurer que PHP et les extensions PDO sont installées
+   - Créer le dossier `uploads/` avec les permissions d'écriture
+
+4. **Accès**
+   - **Front-office**: `http://votre-domaine/`
+   - **Admin**: `http://votre-domaine/admin/`
+   - **Identifiants admin**: `admin` / `admin123`
+
+## 🎨 Thème Mode
+
+Le site est spécialement conçu pour une boutique de mode avec :
+
+### Palette de couleurs
+- **Primaire**: #2c2c2c (Noir élégant)
+- **Secondaire**: #8b7355 (Beige sophistiqué)
+- **Accent**: #d4af37 (Or fashion)
+- **Arrière-plan**: #faf8f5 (Crème doux)
+
+### Typographie
+- **Titres**: Playfair Display (serif élégant)
+- **Texte**: Inter (sans-serif moderne)
+
+### Fonctionnalités Mode
+- **Filtres par genre** (Homme, Femme, Unisexe)
+- **Sélecteur de tailles** interactif
+- **Guide des tailles** en modal
+- **Système de favoris** avec localStorage
+- **Badges produits** (Promo, Nouveau)
+- **Métadonnées produits** (marque, couleur, matière, saison)
+
+## 📁 Structure du Projet
 
 ```
-/
-├── index.php                 # Front-office (site public)
-├── config.php               # Configuration principale
-├── database.sql             # Structure de la base de données
-├── migrate.php              # Script de migration
-├── redirect.php             # Redirections pour compatibilité
-├── uploads/                 # Images des produits
-├── assets/                  # Assets du front-office
-│   ├── css/style.css
-│   └── js/script.js
-└── admin/                   # 🆕 BACK-OFFICE RÉORGANISÉ
-    ├── index.php            # Dashboard admin
-    ├── login.php            # Connexion admin moderne
-    ├── logout.php           # Déconnexion
-    ├── products.php         # Gestion des produits
-    ├── add_product.php      # Ajouter un produit
-    ├── delete_product.php   # Supprimer un produit
-    ├── config.php           # Configuration admin
-    ├── .htaccess            # Sécurité admin
-    ├── assets/              # Assets de l'admin
-    │   ├── css/admin.css    # Styles modernes (500+ lignes)
-    │   └── js/admin.js      # JavaScript avancé
-    └── layouts/             # Templates admin
-        ├── header.php
-        ├── sidebar.php
-        ├── topbar.php
-        └── footer.php
+stylehub/
+├── admin/                  # Interface d'administration
+│   ├── assets/            # CSS/JS admin
+│   ├── layouts/           # Templates admin
+│   └── *.php             # Pages admin
+├── assets/                # Assets front-office
+│   ├── css/              # Styles CSS
+│   └── js/               # Scripts JavaScript
+├── includes/              # Fichiers inclus
+│   ├── config.php        # Configuration front
+│   ├── header.php        # En-tête
+│   └── footer.php        # Pied de page
+├── uploads/               # Images uploadées
+├── config.php            # Configuration principale
+├── database.sql          # Structure BDD
+├── index.php             # Page d'accueil
+├── products.php          # Catalogue
+├── product.php           # Détail produit
+├── cart.php              # Panier
+├── contact.php           # Contact
+└── README.md             # Documentation
 ```
 
-## 🧹 Nettoyage effectué
+## 🔧 Configuration
 
-### ❌ Fichiers supprimés (obsolètes)
-- `login.php` (racine) → `admin/login.php`
-- `logout.php` (racine) → `admin/logout.php`
-- `admin.php` (racine) → `admin/index.php`
-- `products.php` (racine) → `admin/products.php`
-- `add_product.php` (racine) → `admin/add_product.php`
-- `edit_product.php` (racine) → `admin/edit_product.php`
-- `delete_product.php` (racine) → `admin/delete_product.php`
-- `profile.php` (racine) → supprimé
-- `layouts/` (racine) → `admin/layouts/`
-- `migrate_database.sql` → fusionné dans `migrate.php`
-
-### ✅ Structure finale optimisée
-- **Séparation claire** : Front-office / Back-office
-- **Sécurité renforcée** : Admin isolé dans son dossier
-- **URLs propres** : `/admin/` pour l'administration
-- **Maintenance facilitée** : Code organisé et modulaire
-
-## 🛠️ Installation
-
-### 1. Base de données
-```sql
--- Exécuter le fichier database.sql dans phpMyAdmin
--- Ou utiliser le script de migration
-```
-
-### 2. Configuration
+### Base de données
+Modifier les paramètres dans `config.php` :
 ```php
-// Modifier config.php avec vos paramètres
 $host = 'localhost';
-$dbname = 'ecommerce_db';
-$username = 'root';
-$password = '';
+$dbname = 'stylehub_db';
+$username = 'votre_utilisateur';
+$password = 'votre_mot_de_passe';
 ```
 
-### 3. Permissions
-```bash
-# Donner les permissions d'écriture au dossier uploads
-chmod 755 uploads/
-```
+### Paramètres du site
+Les paramètres sont configurables dans `includes/config.php` :
+- Nom du site
+- Description
+- Coordonnées de contact
+- Réseaux sociaux
 
-## 🔐 Accès Admin
+## 🚀 Fonctionnalités Avancées
 
-**URL :** `http://votre-site.com/admin/`
+### Système de Panier
+- Ajout/suppression d'articles
+- Modification des quantités
+- Persistance en session
+- Compteur temps réel
 
-**Identifiants par défaut :**
-- Utilisateur : `admin`
-- Mot de passe : `admin123`
+### Gestion des Images
+- Upload sécurisé
+- Redimensionnement automatique
+- Galerie produit
+- Images par défaut
 
-## 🎨 Design & UX
-
-### Caractéristiques du design
-- **Interface moderne** inspirée des meilleurs dashboards
-- **Sidebar responsive** avec navigation intuitive
-- **Cartes de statistiques** avec animations
-- **Graphiques interactifs** pour les données
-- **Formulaires élégants** avec validation en temps réel
-- **Alerts et notifications** stylées
-- **Mode sombre** (optionnel)
-
-### Technologies utilisées
-- **PHP 8+** avec PDO
-- **MySQL** pour la base de données
-- **Bootstrap 5** pour le responsive
-- **Font Awesome 6** pour les icônes
-- **Chart.js** pour les graphiques
-- **Inter Font** pour la typographie moderne
-
-## 🔒 Sécurité
-
-- ✅ **Requêtes préparées** (protection SQL injection)
-- ✅ **Validation CSRF** sur tous les formulaires
-- ✅ **Hashage des mots de passe** (password_hash)
-- ✅ **Upload sécurisé** avec validation des types
-- ✅ **Sessions sécurisées**
-- ✅ **Headers de sécurité** (.htaccess)
-- ✅ **Validation côté serveur**
-
-## 📱 Responsive Design
-
-L'interface s'adapte parfaitement à tous les écrans :
-- **Desktop** : Interface complète avec sidebar
-- **Tablet** : Sidebar collapsible
-- **Mobile** : Navigation optimisée
-
-## 🚀 Fonctionnalités avancées
-
-### Dashboard
-- Statistiques en temps réel
-- Graphiques des ventes
-- Produits récents
-- Actions rapides
-
-### Gestion des produits
-- Liste avec pagination
-- Recherche et filtres
-- Upload d'images avec preview
-- Validation complète
-- Suppression sécurisée
-
-### Interface utilisateur
-- Animations fluides
-- Auto-save des brouillons
-- Notifications toast
-- Tooltips informatifs
-- Loading states
-
-## 🔧 Personnalisation
-
-### Couleurs
-Modifiez les variables CSS dans `admin/assets/css/admin.css` :
-```css
-:root {
-    --primary-color: #4f46e5;
-    --primary-dark: #3730a3;
-    /* ... autres variables */
-}
-```
-
-### Logo
-Remplacez l'icône dans `admin/layouts/sidebar.php` :
-```html
-<i class="fas fa-store"></i> <!-- Remplacer par votre logo -->
-```
-
-## 📈 Performance
-
-- **CSS et JS minifiés** en production
-- **Images optimisées** automatiquement
-- **Cache des ressources** statiques
-- **Compression GZIP** activée
-- **Lazy loading** des images
-
-## 🐛 Dépannage
-
-### Erreur "Column not found"
-Exécutez le script de migration :
-```
-http://votre-site.com/migrate.php
-```
-
-### Problème d'upload
-Vérifiez les permissions du dossier `uploads/` :
-```bash
-chmod 755 uploads/
-```
-
-### Erreur de connexion
-Vérifiez la configuration dans `config.php`
-
-## 📞 Support
-
-Pour toute question ou problème :
-1. Vérifiez les logs d'erreur PHP
-2. Consultez la documentation
-3. Vérifiez les permissions des fichiers
+### SEO et Performance
+- URLs propres
+- Meta tags optimisés
+- Images optimisées
+- Code minifié
 
 ## 🎯 Roadmap
 
-- [ ] Gestion des catégories
-- [ ] Système de commandes complet
-- [ ] Gestion des clients
-- [ ] Rapports avancés
+- [ ] Système de comptes clients
+- [ ] Processus de commande complet
+- [ ] Paiement en ligne
+- [ ] Gestion des stocks avancée
+- [ ] Système de reviews
+- [ ] Programme de fidélité
 - [ ] API REST
-- [ ] Multi-langues
-- [ ] Mode sombre complet
+- [ ] Application mobile
+
+## 📝 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 👥 Contribution
+
+Les contributions sont les bienvenues ! Merci de :
+1. Fork le projet
+2. Créer une branche feature
+3. Commit vos changements
+4. Push vers la branche
+5. Ouvrir une Pull Request
+
+## 📞 Support
+
+Pour toute question ou support :
+- Email: contact@stylehub.fr
+- Issues GitHub: [Lien vers les issues]
 
 ---
 
-**Développé avec ❤️ pour une expérience e-commerce moderne**
+**StyleHub** - Votre destination mode pour un style unique et tendance ✨

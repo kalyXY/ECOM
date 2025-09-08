@@ -295,3 +295,274 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+// 
+Fonctions spécifiques à la mode
+
+// Fonction pour gérer la sélection de taille
+function selectSize(element, size) {
+    // Retirer la sélection des autres tailles
+    document.querySelectorAll('.size-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Sélectionner la taille cliquée
+    element.classList.add('selected');
+    
+    // Mettre à jour le champ caché si présent
+    const sizeInput = document.querySelector('input[name="selected_size"]');
+    if (sizeInput) {
+        sizeInput.value = size;
+    }
+}
+
+// Fonction pour gérer la wishlist avec localStorage
+function toggleWishlist(productId) {
+    let favorites = JSON.parse(localStorage.getItem('fashion_favorites') || '[]');
+    const button = event.target.closest('.wishlist-btn');
+    const icon = button.querySelector('i');
+    
+    const index = favorites.indexOf(productId);
+    
+    if (index > -1) {
+        // Retirer des favoris
+        favorites.splice(index, 1);
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+        button.classList.remove('active');
+        showToast('Article retiré de vos favoris', 'info');
+    } else {
+        // Ajouter aux favoris
+        favorites.push(productId);
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+        button.classList.add('active');
+        showToast('Article ajouté à vos favoris', 'success');
+    }
+    
+    localStorage.setItem('fashion_favorites', JSON.stringify(favorites));
+    updateWishlistCount();
+}
+
+// Fonction pour mettre à jour le compteur de wishlist
+function updateWishlistCount() {
+    const favorites = JSON.parse(localStorage.getItem('fashion_favorites') || '[]');
+    const wishlistCounters = document.querySelectorAll('.wishlist-count');
+    
+    wishlistCounters.forEach(counter => {
+        counter.textContent = favorites.length;
+        counter.style.display = favorites.length > 0 ? 'inline' : 'none';
+    });
+}
+
+// Fonction pour initialiser les boutons wishlist
+function initWishlistButtons() {
+    const favorites = JSON.parse(localStorage.getItem('fashion_favorites') || '[]');
+    
+    document.querySelectorAll('.wishlist-btn').forEach(button => {
+        const productId = parseInt(button.dataset.productId);
+        const icon = button.querySelector('i');
+        
+        if (favorites.includes(productId)) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            button.classList.add('active');
+        }
+    });
+}
+
+// Fonction pour le zoom d'image produit
+function initImageZoom() {
+    const productImages = document.querySelectorAll('.product-main-image');
+    
+    productImages.forEach(img => {
+        img.addEventListener('mousemove', function(e) {
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const xPercent = (x / rect.width) * 100;
+            const yPercent = (y / rect.height) * 100;
+            
+            this.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+            this.style.transform = 'scale(1.5)';
+        });
+        
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+}
+
+// Fonction pour le carrousel d'images produit
+function initProductGallery() {
+    const thumbnails = document.querySelectorAll('.product-thumbnail');
+    const mainImage = document.querySelector('.product-main-image');
+    
+    thumbnails.forEach(thumb => {
+        thumb.addEventListener('click', function() {
+            // Retirer la classe active des autres thumbnails
+            thumbnails.forEach(t => t.classList.remove('active'));
+            
+            // Ajouter la classe active au thumbnail cliqué
+            this.classList.add('active');
+            
+            // Changer l'image principale
+            if (mainImage) {
+                mainImage.src = this.src;
+                mainImage.alt = this.alt;
+            }
+        });
+    });
+}
+
+// Fonction pour le filtre de couleur
+function filterByColor(color) {
+    const products = document.querySelectorAll('.product-card');
+    
+    products.forEach(product => {
+        const productColor = product.dataset.color;
+        
+        if (!color || productColor === color) {
+            product.style.display = 'block';
+            product.classList.add('fade-in-up');
+        } else {
+            product.style.display = 'none';
+        }
+    });
+    
+    // Mettre à jour les boutons de filtre
+    document.querySelectorAll('.color-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.color === color);
+    });
+}
+
+// Fonction pour le guide des tailles
+function showSizeGuide() {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Guide des Tailles</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Taille</th>
+                                    <th>Tour de poitrine (cm)</th>
+                                    <th>Tour de taille (cm)</th>
+                                    <th>Tour de hanches (cm)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>XS</td><td>78-82</td><td>58-62</td><td>84-88</td></tr>
+                                <tr><td>S</td><td>82-86</td><td>62-66</td><td>88-92</td></tr>
+                                <tr><td>M</td><td>86-90</td><td>66-70</td><td>92-96</td></tr>
+                                <tr><td>L</td><td>90-94</td><td>70-74</td><td>96-100</td></tr>
+                                <tr><td>XL</td><td>94-98</td><td>74-78</td><td>100-104</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+    });
+}
+
+// Fonction pour l'animation de chargement des produits
+function showProductSkeleton() {
+    const container = document.querySelector('.products-container');
+    if (!container) return;
+    
+    const skeleton = `
+        <div class="col-md-6 col-lg-3 product-skeleton">
+            <div class="card">
+                <div class="card-img-top shimmer" style="height: 280px;"></div>
+                <div class="card-body">
+                    <div class="shimmer mb-2" style="height: 20px; width: 80%;"></div>
+                    <div class="shimmer mb-2" style="height: 16px; width: 60%;"></div>
+                    <div class="shimmer mb-3" style="height: 24px; width: 40%;"></div>
+                    <div class="shimmer" style="height: 40px;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = skeleton.repeat(8);
+}
+
+// Fonction pour l'effet parallax sur le hero
+function initParallaxEffect() {
+    const hero = document.querySelector('.hero-section');
+    if (!hero) return;
+    
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.5;
+        hero.style.transform = `translateY(${rate}px)`;
+    });
+}
+
+// Initialisation spécifique à la mode
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les fonctionnalités mode
+    initWishlistButtons();
+    updateWishlistCount();
+    initImageZoom();
+    initProductGallery();
+    initParallaxEffect();
+    
+    // Gestionnaire pour les boutons de taille
+    document.querySelectorAll('.size-option').forEach(option => {
+        option.addEventListener('click', function() {
+            selectSize(this, this.textContent.trim());
+        });
+    });
+    
+    // Gestionnaire pour le guide des tailles
+    document.querySelectorAll('.size-guide-btn').forEach(btn => {
+        btn.addEventListener('click', showSizeGuide);
+    });
+    
+    // Animation des éléments au scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+            }
+        });
+    }, observerOptions);
+    
+    // Observer les éléments à animer
+    document.querySelectorAll('.product-card, .category-card, .service-item, .contact-item').forEach(item => {
+        observer.observe(item);
+    });
+});
+
+// Fonction pour le mode sombre (optionnel)
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode'));
+}
+
+// Charger le mode sombre si activé
+if (localStorage.getItem('dark-mode') === 'true') {
+    document.body.classList.add('dark-mode');
+}
