@@ -28,21 +28,63 @@ $cartCount = getCartItemCount();
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <!-- Preload important resources -->
+    <link rel="preload" href="assets/js/modern-ecommerce.js" as="script">
+    
+    <!-- Meta tags pour SEO mode -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name']); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($siteSettings['site_description']); ?>">
+    <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="index.php">
-                <i class="fas fa-tshirt me-2"></i>
+    <!-- Navigation moderne style Alibaba -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid px-3">
+            <!-- Logo -->
+            <a class="navbar-brand" href="index.php">
+                <i class="fas fa-shopping-bag"></i>
                 <?php echo htmlspecialchars($siteSettings['site_name']); ?>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <!-- Barre de recherche centrale -->
+            <div class="search-container d-none d-lg-block">
+                <form method="GET" action="products.php">
+                    <div class="search-input-group">
+                        <input class="form-control" type="search" name="search" 
+                               placeholder="Rechercher des vêtements, marques..." 
+                               value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                        <button class="search-btn" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Bouton mobile -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="fas fa-bars"></i>
             </button>
             
+            <!-- Navigation -->
             <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto d-lg-none">
+                    <!-- Recherche mobile -->
+                    <li class="nav-item">
+                        <form class="p-3" method="GET" action="products.php">
+                            <div class="search-input-group">
+                                <input class="form-control" type="search" name="search" 
+                                       placeholder="Rechercher..." 
+                                       value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                                <button class="search-btn" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </li>
+                </ul>
+                
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>" href="index.php">
@@ -53,13 +95,29 @@ $cartCount = getCartItemCount();
                         <a class="nav-link dropdown-toggle <?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-tshirt me-1"></i>Collections
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="products.php?category=femme"><i class="fas fa-female me-2"></i>Femme</a></li>
-                            <li><a class="dropdown-item" href="products.php?category=homme"><i class="fas fa-male me-2"></i>Homme</a></li>
-                            <li><a class="dropdown-item" href="products.php?category=accessoires"><i class="fas fa-gem me-2"></i>Accessoires</a></li>
+                        <ul class="dropdown-menu border-0 shadow">
+                            <li><a class="dropdown-item" href="products.php?gender=femme">
+                                <i class="fas fa-female me-2 text-pink"></i>Mode Femme
+                            </a></li>
+                            <li><a class="dropdown-item" href="products.php?gender=homme">
+                                <i class="fas fa-male me-2 text-primary"></i>Mode Homme  
+                            </a></li>
+                            <li><a class="dropdown-item" href="products.php?category=enfant">
+                                <i class="fas fa-child me-2 text-success"></i>Mode Enfant
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="products.php"><i class="fas fa-star me-2"></i>Toutes les collections</a></li>
+                            <li><a class="dropdown-item" href="products.php?category=accessoires">
+                                <i class="fas fa-gem me-2 text-warning"></i>Accessoires
+                            </a></li>
+                            <li><a class="dropdown-item" href="products.php">
+                                <i class="fas fa-star me-2 text-primary"></i>Toute la collection
+                            </a></li>
                         </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="products.php?featured=1">
+                            <i class="fas fa-fire me-1"></i>Tendances
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : ''; ?>" href="contact.php">
@@ -68,22 +126,21 @@ $cartCount = getCartItemCount();
                     </li>
                 </ul>
                 
-                <!-- Barre de recherche -->
-                <form class="d-flex me-3" method="GET" action="products.php">
-                    <div class="input-group">
-                        <input class="form-control" type="search" name="search" placeholder="Rechercher un article..." 
-                               value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                        <button class="btn btn-outline-light" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </form>
-                
+                <!-- Actions utilisateur -->
                 <ul class="navbar-nav">
+                    <!-- Wishlist -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="wishlist.php">
+                            <i class="far fa-heart"></i>
+                            <span class="d-lg-none ms-2">Favoris</span>
+                        </a>
+                    </li>
+                    
                     <!-- Panier -->
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="cart.php">
-                            <i class="fas fa-shopping-cart me-1"></i>Panier
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="d-lg-none ms-2">Panier</span>
                             <?php if ($cartCount > 0): ?>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
                                     <?php echo $cartCount; ?>
@@ -94,11 +151,24 @@ $cartCount = getCartItemCount();
                         </a>
                     </li>
                     
-                    <!-- Admin -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="admin/login.php">
-                            <i class="fas fa-user-shield me-1"></i>Admin
+                    <!-- Compte -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i>
+                            <span class="d-lg-none ms-2">Mon Compte</span>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                            <li><a class="dropdown-item" href="profile.php">
+                                <i class="fas fa-user me-2"></i>Mon Profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="orders.php">
+                                <i class="fas fa-box me-2"></i>Mes Commandes
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="admin/login.php">
+                                <i class="fas fa-user-shield me-2"></i>Administration
+                            </a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>

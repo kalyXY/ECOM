@@ -1,84 +1,175 @@
-/* StyleHub - CSS pour Boutique de Mode */
+/* StyleHub - CSS Moderne Inspiré Alibaba/AliExpress pour Mode */
 
 :root {
-    --primary-color: #2c2c2c;
-    --primary-dark: #1a1a1a;
-    --secondary-color: #8b7355;
-    --accent-color: #d4af37;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #0dcaf0;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
+    /* Couleurs principales inspirées Alibaba/AliExpress */
+    --primary-color: #ff6900;
+    --primary-dark: #e55a00;
+    --primary-light: #ff8533;
+    --secondary-color: #1a1a1a;
+    --accent-color: #ff4d4f;
+    --success-color: #52c41a;
+    --danger-color: #ff4d4f;
+    --warning-color: #faad14;
+    --info-color: #1890ff;
+    
+    /* Couleurs neutres modernes */
+    --light-color: #fafafa;
+    --dark-color: #262626;
     --border-color: #e8e8e8;
-    --text-color: #2c2c2c;
-    --text-muted: #6c757d;
-    --fashion-pink: #f8e8e8;
-    --fashion-gold: #d4af37;
-    --fashion-cream: #faf8f5;
+    --border-light: #f0f0f0;
+    --text-color: #262626;
+    --text-secondary: #595959;
+    --text-muted: #8c8c8c;
+    
+    /* Couleurs spécifiques mode */
+    --fashion-pink: #ff4d4f;
+    --fashion-gold: #faad14;
+    --fashion-cream: #fafafa;
+    --fashion-purple: #722ed1;
+    --fashion-teal: #13c2c2;
+    
+    /* Couleurs de fond */
+    --bg-primary: #ffffff;
+    --bg-secondary: #fafafa;
+    --bg-tertiary: #f5f5f5;
+    
+    /* Ombres modernes */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    --shadow-hover: 0 8px 30px rgba(255,105,0,0.15);
+    
+    /* Rayons de bordure */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
 }
 
-/* Base styles */
+/* Base styles modernes */
 body {
-    font-family: 'Playfair Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 1.5;
     color: var(--text-color);
-    background-color: var(--fashion-cream);
+    background-color: var(--bg-secondary);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography */
+/* Typography moderne */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5em;
 }
+
+h1 { font-size: 28px; font-weight: 700; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 20px; font-weight: 600; }
+h4 { font-size: 16px; font-weight: 600; }
+h5 { font-size: 14px; font-weight: 600; }
+h6 { font-size: 12px; font-weight: 600; }
 
 .fashion-title {
-    font-family: 'Playfair Display', serif;
     font-weight: 700;
-    letter-spacing: -0.5px;
+    color: var(--text-color);
 }
 
-/* Navigation */
+.text-primary { color: var(--primary-color) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.text-pink { color: #ff4d4f !important; }
+
+/* Navigation moderne style Alibaba */
 .navbar {
-    box-shadow: 0 2px 10px rgba(0,0,0,.08);
-    backdrop-filter: blur(10px);
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+    background: var(--bg-primary) !important;
+    box-shadow: var(--shadow-sm);
+    border-bottom: 1px solid var(--border-light);
+    padding: 8px 0;
+    transition: all 0.3s ease;
 }
 
 .navbar-brand {
-    font-size: 1.8rem;
+    font-size: 24px;
     font-weight: 700;
-    font-family: 'Playfair Display', serif;
-    letter-spacing: -0.5px;
+    color: var(--primary-color) !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand i {
+    font-size: 28px;
+    margin-right: 8px;
 }
 
 .nav-link {
     font-weight: 500;
-    transition: all 0.3s ease;
+    color: var(--text-color) !important;
+    padding: 12px 16px !important;
+    border-radius: var(--border-radius-md);
+    transition: all 0.2s ease;
     position: relative;
 }
 
 .nav-link:hover {
-    transform: translateY(-1px);
-    color: var(--accent-color) !important;
+    color: var(--primary-color) !important;
+    background-color: rgba(255, 105, 0, 0.05);
 }
 
 .nav-link.active {
+    color: var(--primary-color) !important;
+    background-color: rgba(255, 105, 0, 0.1);
     font-weight: 600;
-    color: var(--accent-color) !important;
 }
 
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 2px;
-    background: var(--accent-color);
-    border-radius: 1px;
+/* Barre de recherche style Alibaba */
+.navbar .search-container {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 20px;
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.search-input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 105, 0, 0.1);
+}
+
+.search-input-group .form-control {
+    border: none;
+    background: transparent;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.search-input-group .form-control:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.search-btn {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
+    transition: all 0.2s ease;
+}
+
+.search-btn:hover {
+    background: var(--primary-dark);
 }
 
 /* Dropdown menu styling */
@@ -100,157 +191,244 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateX(5px);
 }
 
-/* Hero section */
-.hero-section {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    padding: 100px 0;
-    margin-bottom: 3rem;
-    position: relative;
-    overflow: hidden;
+/* Hero Section moderne style Alibaba */
+.hero-modern {
+    background: var(--bg-primary);
+    padding: 40px 0;
 }
 
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="fashion-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23fashion-pattern)"/></svg>');
-    opacity: 0.3;
+.hero-banner {
+    background: linear-gradient(135deg, rgba(255, 105, 0, 0.05) 0%, rgba(255, 77, 79, 0.05) 100%);
+    border-radius: var(--border-radius-xl);
+    margin: 0 15px;
 }
 
 .hero-content {
-    text-align: center;
-    position: relative;
-    z-index: 2;
+    padding: 60px 0;
 }
 
 .hero-title {
-    font-size: 4rem;
+    font-size: 48px;
     font-weight: 700;
-    margin-bottom: 1.5rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    font-family: 'Playfair Display', serif;
-    letter-spacing: -1px;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    line-height: 1.2;
 }
 
 .hero-subtitle {
-    font-size: 1.4rem;
-    margin-bottom: 2rem;
-    opacity: 0.95;
-    font-weight: 300;
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    line-height: 1.6;
 }
 
-.hero-cta {
-    font-size: 1.1rem;
-    padding: 15px 40px;
-    border-radius: 50px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-    background: var(--accent-color);
-    border: none;
+.hero-actions {
+    margin-bottom: 40px;
+}
+
+.hero-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.feature-item i {
+    font-size: 16px;
+}
+
+.hero-image img {
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Catégories rapides */
+.quick-categories {
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.category-quick-link {
+    display: block;
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 15px;
+    border-radius: var(--border-radius-md);
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.category-quick-link:hover {
     color: var(--primary-color);
+    background-color: rgba(255, 105, 0, 0.05);
+    transform: translateY(-2px);
 }
 
-.hero-cta:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
-    color: var(--primary-color);
+/* Responsive hero */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 32px;
+    }
+    
+    .hero-subtitle {
+        font-size: 16px;
+    }
+    
+    .hero-actions .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .hero-features {
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+    }
 }
 
-/* Product cards */
+/* Product cards style Alibaba/AliExpress */
 .product-card {
-    border: none;
-    border-radius: 20px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-md);
     overflow: hidden;
-    transition: all 0.4s ease;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
     height: 100%;
-    background: white;
     position: relative;
+    cursor: pointer;
 }
 
 .product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-color);
 }
 
-.product-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 0%, rgba(212, 175, 55, 0.05) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-}
-
-.product-card:hover::before {
-    opacity: 1;
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-tertiary);
 }
 
 .product-image {
-    height: 280px;
+    width: 100%;
+    height: 240px;
     object-fit: cover;
-    transition: transform 0.4s ease;
-    position: relative;
-    z-index: 2;
+    transition: transform 0.3s ease;
 }
 
 .product-card:hover .product-image {
-    transform: scale(1.08);
+    transform: scale(1.05);
 }
 
 .product-info {
-    padding: 2rem;
-    position: relative;
-    z-index: 3;
+    padding: 12px;
+    background: var(--bg-primary);
 }
 
 .product-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.8rem;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--text-color);
-    font-family: 'Playfair Display', serif;
-}
-
-.product-description {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 8px;
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    line-height: 1.5;
+    min-height: 40px;
+}
+
+.product-title:hover {
+    color: var(--primary-color);
+}
+
+.product-price-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .product-price {
-    font-size: 1.4rem;
+    font-size: 18px;
     font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 1.2rem;
-    font-family: 'Playfair Display', serif;
-}
-
-.product-price .sale-price {
     color: var(--accent-color);
-    margin-right: 0.5rem;
 }
 
-.product-price .original-price {
+.product-original-price {
+    font-size: 14px;
     color: var(--text-muted);
     text-decoration: line-through;
-    font-size: 1rem;
-    font-weight: 400;
+}
+
+.product-discount {
+    background: var(--accent-color);
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+}
+
+.product-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.product-rating .stars {
+    color: var(--warning-color);
+}
+
+.product-sold {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.product-shipping {
+    font-size: 12px;
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.product-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.product-tag {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-light);
 }
 
 .product-badge {
@@ -496,34 +674,104 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1rem;
 }
 
-/* Buttons */
-.btn {
-    border-radius: 10px;
+/* Badges modernes */
+.product-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.badge-sale {
+    background: var(--accent-color);
+    color: white;
+    font-size: 12px;
     font-weight: 600;
-    padding: 12px 25px;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+.badge-new {
+    background: var(--success-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+.badge-hot {
+    background: var(--warning-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Wishlist heart moderne */
+.wishlist-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    z-index: 10;
+    box-shadow: var(--shadow-sm);
+}
+
+.wishlist-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.wishlist-btn.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* Buttons modernes */
+.btn {
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .btn-primary {
     background: var(--primary-color);
     border-color: var(--primary-color);
+    color: white;
 }
 
 .btn-primary:hover {
     background: var(--primary-dark);
     border-color: var(--primary-dark);
-    box-shadow: 0 8px 20px rgba(44, 44, 44, 0.3);
+    color: white;
 }
 
 .btn-outline-primary {
     border-color: var(--primary-color);
     color: var(--primary-color);
+    background: transparent;
 }
 
 .btn-outline-primary:hover {
@@ -532,16 +780,61 @@ h1, h2, h3, h4, h5, h6 {
     color: white;
 }
 
-.btn-fashion {
-    background: var(--accent-color);
-    border-color: var(--accent-color);
-    color: var(--primary-color);
+.btn-success {
+    background: var(--success-color);
+    border-color: var(--success-color);
+    color: white;
 }
 
-.btn-fashion:hover {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
+.btn-danger {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
     color: white;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+}
+
+/* Bouton Add to Cart style Alibaba */
+.btn-add-to-cart {
+    background: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius-md);
+    color: white;
+    font-weight: 500;
+    padding: 8px 16px;
+    width: 100%;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.btn-add-to-cart:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-buy-now {
+    background: var(--accent-color);
+    border: none;
+    border-radius: var(--border-radius-md);
+    color: white;
+    font-weight: 500;
+    padding: 8px 16px;
+    width: 100%;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.btn-buy-now:hover {
+    background: #ff3333;
+    transform: translateY(-1px);
 }
 
 /* Alerts */

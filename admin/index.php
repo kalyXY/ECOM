@@ -91,10 +91,27 @@ include 'layouts/header.php';
         <?php include 'layouts/topbar.php'; ?>
         
         <div class="page-content">
-            <!-- En-tête de page -->
-            <div class="page-header">
-                <h1 class="page-title">Tableau de bord</h1>
-                <p class="page-subtitle">Vue d'ensemble de votre boutique e-commerce</p>
+            <!-- En-tête de page moderne -->
+            <div class="page-header-modern">
+                <div class="header-content">
+                    <div class="header-title">
+                        <h1 class="display-6 fw-bold">Dashboard StyleHub</h1>
+                        <p class="text-muted fs-6">Gérez votre boutique de mode en ligne</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="btn-group me-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+                                <i class="fas fa-sync-alt me-1"></i>Actualiser
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="exportData()">
+                                <i class="fas fa-download me-1"></i>Exporter
+                            </button>
+                        </div>
+                        <button class="btn btn-primary" onclick="location.href='add_product.php'">
+                            <i class="fas fa-plus me-2"></i>Nouveau Produit
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- Cartes de statistiques -->
