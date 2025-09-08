@@ -1,111 +1,85 @@
-# StyleHub - Boutique de Mode en Ligne
+# E-Commerce Back-Office
 
-StyleHub est une boutique de mode en ligne moderne et élégante, développée en PHP avec une interface d'administration complète.
+Un système de gestion e-commerce moderne avec interface d'administration professionnelle.
 
-## 🌟 Fonctionnalités
+## 🚀 Fonctionnalités
 
-### Front-Office
-- **Design moderne et responsive** adapté à la mode
-- **Catalogue de produits** avec filtres avancés (genre, catégorie, prix, couleur)
-- **Système de panier** avec gestion des quantités
-- **Pages produits détaillées** avec galerie d'images
-- **Système de favoris** (wishlist)
-- **Guide des tailles** interactif
-- **Newsletter** et contact
-- **Animations CSS** et effets visuels
+### Front-Office (Public)
+- ✅ Affichage des produits
+- ✅ Design responsive avec Bootstrap 5
+- ✅ Navigation intuitive
 
 ### Back-Office (Admin)
-- **Dashboard** avec statistiques
-- **Gestion des produits** (CRUD complet)
-- **Gestion des catégories** hiérarchiques
-- **Gestion des commandes**
-- **Gestion des clients**
-- **Rapports et analytics**
-- **Interface moderne** avec sidebar responsive
+- ✅ **Dashboard moderne** avec statistiques en temps réel
+- ✅ **Gestion complète des produits** (CRUD)
+- ✅ **Upload d'images sécurisé** avec redimensionnement automatique
+- ✅ **Authentification sécurisée** avec sessions
+- ✅ **Interface responsive** et moderne
+- ✅ **Pagination intelligente**
+- ✅ **Graphiques interactifs** (Chart.js)
+- ✅ **Design professionnel** avec animations
 
-## 🛠️ Technologies Utilisées
-
-- **Backend**: PHP 8.0+, MySQL/MariaDB
-- **Frontend**: HTML5, CSS3, JavaScript ES6+
-- **Framework CSS**: Bootstrap 5.3
-- **Icons**: Font Awesome 6.4
-- **Fonts**: Google Fonts (Playfair Display, Inter)
-
-## 📦 Installation
-
-1. **Cloner le projet**
-   ```bash
-   git clone [url-du-repo]
-   cd stylehub
-   ```
-
-2. **Configuration de la base de données**
-   - Créer une base de données MySQL nommée `stylehub_db`
-   - Importer le fichier `database.sql`
-   - Modifier les paramètres de connexion dans `config.php`
-
-3. **Configuration du serveur web**
-   - Pointer le document root vers le dossier du projet
-   - S'assurer que PHP et les extensions PDO sont installées
-   - Créer le dossier `uploads/` avec les permissions d'écriture
-
-4. **Accès**
-   - **Front-office**: `http://votre-domaine/`
-   - **Admin**: `http://votre-domaine/admin/`
-   - **Identifiants admin**: `admin` / `admin123`
-
-## 🎨 Thème Mode
-
-Le site est spécialement conçu pour une boutique de mode avec :
-
-### Palette de couleurs
-- **Primaire**: #2c2c2c (Noir élégant)
-- **Secondaire**: #8b7355 (Beige sophistiqué)
-- **Accent**: #d4af37 (Or fashion)
-- **Arrière-plan**: #faf8f5 (Crème doux)
-
-### Typographie
-- **Titres**: Playfair Display (serif élégant)
-- **Texte**: Inter (sans-serif moderne)
-
-### Fonctionnalités Mode
-- **Filtres par genre** (Homme, Femme, Unisexe)
-- **Sélecteur de tailles** interactif
-- **Guide des tailles** en modal
-- **Système de favoris** avec localStorage
-- **Badges produits** (Promo, Nouveau)
-- **Métadonnées produits** (marque, couleur, matière, saison)
-
-## 📁 Structure du Projet
+## 📁 Structure du projet (RÉORGANISÉE)
 
 ```
-stylehub/
-├── admin/                  # Interface d'administration
-│   ├── assets/            # CSS/JS admin
-│   ├── layouts/           # Templates admin
-│   └── *.php             # Pages admin
-├── assets/                # Assets front-office
-│   ├── css/              # Styles CSS
-│   └── js/               # Scripts JavaScript
-├── includes/              # Fichiers inclus
-│   ├── config.php        # Configuration front
-│   ├── header.php        # En-tête
-│   └── footer.php        # Pied de page
-├── uploads/               # Images uploadées
-├── config.php            # Configuration principale
-├── database.sql          # Structure BDD
-├── index.php             # Page d'accueil
-├── products.php          # Catalogue
-├── product.php           # Détail produit
-├── cart.php              # Panier
-├── contact.php           # Contact
-└── README.md             # Documentation
+/
+├── index.php                 # Front-office (site public)
+├── config.php               # Configuration principale
+├── database.sql             # Structure de la base de données
+├── migrate.php              # Script de migration
+├── redirect.php             # Redirections pour compatibilité
+├── uploads/                 # Images des produits
+├── assets/                  # Assets du front-office
+│   ├── css/style.css
+│   └── js/script.js
+└── admin/                   # 🆕 BACK-OFFICE RÉORGANISÉ
+    ├── index.php            # Dashboard admin
+    ├── login.php            # Connexion admin moderne
+    ├── logout.php           # Déconnexion
+    ├── products.php         # Gestion des produits
+    ├── add_product.php      # Ajouter un produit
+    ├── delete_product.php   # Supprimer un produit
+    ├── config.php           # Configuration admin
+    ├── .htaccess            # Sécurité admin
+    ├── assets/              # Assets de l'admin
+    │   ├── css/admin.css    # Styles modernes (500+ lignes)
+    │   └── js/admin.js      # JavaScript avancé
+    └── layouts/             # Templates admin
+        ├── header.php
+        ├── sidebar.php
+        ├── topbar.php
+        └── footer.php
 ```
 
-## 🔧 Configuration
+## 🧹 Nettoyage effectué
 
-### Base de données
-Modifier les paramètres dans `config.php` :
+### ❌ Fichiers supprimés (obsolètes)
+- `login.php` (racine) → `admin/login.php`
+- `logout.php` (racine) → `admin/logout.php`
+- `admin.php` (racine) → `admin/index.php`
+- `products.php` (racine) → `admin/products.php`
+- `add_product.php` (racine) → `admin/add_product.php`
+- `edit_product.php` (racine) → `admin/edit_product.php`
+- `delete_product.php` (racine) → `admin/delete_product.php`
+- `profile.php` (racine) → supprimé
+- `layouts/` (racine) → `admin/layouts/`
+- `migrate_database.sql` → fusionné dans `migrate.php`
+
+### ✅ Structure finale optimisée
+- **Séparation claire** : Front-office / Back-office
+- **Sécurité renforcée** : Admin isolé dans son dossier
+- **URLs propres** : `/admin/` pour l'administration
+- **Maintenance facilitée** : Code organisé et modulaire
+
+## 🛠️ Installation
+
+### 1. Base de données
+```sql
+-- Exécuter le fichier database.sql dans phpMyAdmin
+-- Ou utiliser le script de migration
+```
+
+### 2. Configuration
 ```php
 $host = 'localhost';
 $dbname = 'stylehub_db';

@@ -51,6 +51,12 @@
                     <span>Catégories</span>
                 </a>
             </div>
+            <div class="nav-item">
+                <a href="sizes_colors.php" class="nav-link <?php echo ($active ?? '') === 'sizes_colors' ? 'active' : ''; ?>">
+                    <i class="fas fa-palette"></i>
+                    <span>Tailles & Couleurs</span>
+                </a>
+            </div>
         </div>
         
         <!-- Section ventes -->

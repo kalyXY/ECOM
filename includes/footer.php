@@ -137,14 +137,12 @@
     <!-- Custom JS -->
     <script src="assets/js/script.js"></script>
     
+    <!-- Modern E-commerce JS -->
+    <script src="assets/js/modern-ecommerce.js"></script>
+    
     <!-- Scripts spécifiques à la page -->
     <?php if (isset($pageScripts)): ?>
         <?php echo $pageScripts; ?>
     <?php endif; ?>
-    
-    <script>
-        // Mettre à jour le compteur du panier au chargement
-        updateCartCount();
-    </script>
 </body>
 </html>
