@@ -1,23 +1,40 @@
-# E-Commerce Back-Office
+# StyleHub - Plateforme E-Commerce Mode Professionnelle
 
-Un système de gestion e-commerce moderne avec interface d'administration professionnelle.
+Une plateforme e-commerce moderne spécialisée dans la vente de vêtements pour hommes, femmes et enfants, avec un design inspiré d'Alibaba/AliExpress et des fonctionnalités avancées.
 
-## 🚀 Fonctionnalités
+## 🚀 Fonctionnalités Principales
 
-### Front-Office (Public)
-- ✅ Affichage des produits
-- ✅ Design responsive avec Bootstrap 5
-- ✅ Navigation intuitive
+### 🛍️ Front-Office (Site Public)
+- ✅ **Design moderne** inspiré d'Alibaba/AliExpress
+- ✅ **Interface responsive** optimisée mobile-first
+- ✅ **Navigation intuitive** avec recherche centralisée
+- ✅ **Cartes produits modernes** avec badges, notes, et livraison
+- ✅ **Système de wishlist** avec persistance localStorage
+- ✅ **Panier intelligent** avec compteur temps réel
+- ✅ **Notifications toast** pour les interactions
+- ✅ **Lazy loading** des images pour les performances
+- ✅ **Hero section moderne** avec catégories rapides
+- ✅ **Filtres avancés** par genre, catégorie, prix
+- ✅ **SEO optimisé** avec meta tags Open Graph
 
-### Back-Office (Admin)
-- ✅ **Dashboard moderne** avec statistiques en temps réel
-- ✅ **Gestion complète des produits** (CRUD)
-- ✅ **Upload d'images sécurisé** avec redimensionnement automatique
+### 🎨 Spécialisations Mode
+- ✅ **Gestion des tailles** (XS-XXL, tailles numériques, chaussures)
+- ✅ **Palette de couleurs** avec codes hex et prévisualisation
+- ✅ **Variantes produits** (taille/couleur/stock)
+- ✅ **Catégories mode** (Femme, Homme, Enfant, Accessoires)
+- ✅ **Badges produits** (Nouveau, Promo, Hot)
+- ✅ **Guide des tailles** et informations produits détaillées
+
+### 🎛️ Back-Office (Administration)
+- ✅ **Dashboard professionnel** avec statistiques en temps réel
+- ✅ **Interface moderne** avec sidebar responsive
+- ✅ **Gestion complète des produits** (CRUD avancé)
+- ✅ **Gestion des tailles et couleurs** avec interface dédiée
+- ✅ **Upload d'images sécurisé** avec validation
 - ✅ **Authentification sécurisée** avec sessions
-- ✅ **Interface responsive** et moderne
-- ✅ **Pagination intelligente**
 - ✅ **Graphiques interactifs** (Chart.js)
-- ✅ **Design professionnel** avec animations
+- ✅ **Actions rapides** et boutons d'export
+- ✅ **Design cohérent** avec la charte graphique
 
 ## 📁 Structure du projet (RÉORGANISÉE)
 
