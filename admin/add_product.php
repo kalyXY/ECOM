@@ -5,6 +5,20 @@ requireLogin();
 $errors = [];
 $success = '';
 
+// Charger catégories et tailles
+$categories = [];
+$sizes = [];
+try {
+    $categories = $pdo->query("SELECT id, name FROM categories WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+} catch (Exception $e) {
+    // Catégories optionnelles
+}
+try {
+    $sizes = $pdo->query("SELECT id, name FROM sizes ORDER BY sort_order ASC, name ASC")->fetchAll();
+} catch (Exception $e) {
+    // Tailles optionnelles
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Vérification CSRF
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
@@ -14,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = trim($_POST['description'] ?? '');
         $price = $_POST['price'] ?? '';
         $stock = (int)($_POST['stock'] ?? 0);
+        $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+        $selectedSizes = isset($_POST['sizes']) && is_array($_POST['sizes']) ? array_map('intval', $_POST['sizes']) : [];
 
         // Validation
         if (empty($name)) {
@@ -32,28 +48,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Le stock ne peut pas être négatif.';
         }
 
-        // Gestion de l'upload d'image
-        $imageUrl = null;
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            if (!isValidImageUpload($_FILES['image'])) {
-                $errors[] = 'Image invalide. Formats acceptés : JPG, PNG, JPEG. Taille max : 2MB.';
-            } else {
-                $uploadDir = '../uploads/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
+        // Gestion des uploads d'images
+        $imageUrl = null; // image principale (première)
+        $galleryImages = [];
+        $maxImages = 5;
+
+        // Normaliser les inputs fichiers pour images multiples
+        $files = [];
+        if (!empty($_FILES['images']) && is_array($_FILES['images']['name'])) {
+            $count = count($_FILES['images']['name']);
+            for ($i = 0; $i < $count; $i++) {
+                $files[] = [
+                    'name' => $_FILES['images']['name'][$i],
+                    'type' => $_FILES['images']['type'][$i],
+                    'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                    'error' => $_FILES['images']['error'][$i],
+                    'size' => $_FILES['images']['size'][$i]
+                ];
+            }
+        } elseif (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Compat: ancien champ simple
+            $files[] = $_FILES['image'];
+        }
+
+        if (count($files) > $maxImages) {
+            $errors[] = 'Trop d\'images sélectionnées. Maximum : ' . $maxImages . '.';
+        }
+
+        $uploadDir = '../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if (empty($errors) && !empty($files)) {
+            foreach ($files as $index => $file) {
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    $errors[] = 'Erreur d\'upload pour une image (code ' . $file['error'] . ').';
+                    continue;
                 }
-                
-                $fileName = uniqid() . '.' . pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+                if (!isValidImageUpload($file)) {
+                    $errors[] = 'Fichier non autorisé ou trop volumineux. Formats: JPG, PNG. Max 2MB.';
+                    continue;
+                }
+
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $fileName = uniqid('', true) . '.' . $ext;
                 $uploadPath = $uploadDir . $fileName;
 
-                if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
-                    // Redimensionner l'image si nécessaire
+                if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                     if (function_exists('resizeImage')) {
-                        resizeImage($uploadPath, $uploadPath, 800, 600);
+                        resizeImage($uploadPath, $uploadPath, 1200, 1200);
                     }
-                    $imageUrl = 'uploads/' . $fileName;
+                    $url = 'uploads/' . $fileName;
+                    if ($imageUrl === null) {
+                        $imageUrl = $url; // première comme principale
+                    }
+                    $galleryImages[] = $url;
                 } else {
-                    $errors[] = 'Erreur lors de l\'upload de l\'image.';
+                    $errors[] = 'Impossible d\'enregistrer une image.';
                 }
             }
         }
@@ -70,18 +122,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // La colonne stock n'existe pas
                 }
 
+                $pdo->beginTransaction();
+
                 if ($hasStock) {
-                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, stock, image_url) VALUES (:name, :description, :price, :stock, :image_url)");
-                    $stmt->bindParam(':stock', $stock);
+                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (:name, :description, :price, :stock, :category_id, :image_url)");
+                    $stmt->bindParam(':stock', $stock, PDO::PARAM_INT);
                 } else {
-                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url) VALUES (:name, :description, :price, :image_url)");
+                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, category_id, image_url) VALUES (:name, :description, :price, :category_id, :image_url)");
                 }
-                
+
                 $stmt->bindParam(':name', $name);
                 $stmt->bindParam(':description', $description);
                 $stmt->bindParam(':price', $price);
+                if ($categoryId) {
+                    $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue(':category_id', null, PDO::PARAM_NULL);
+                }
                 $stmt->bindParam(':image_url', $imageUrl);
                 $stmt->execute();
+
+                $newProductId = (int)$pdo->lastInsertId();
+
+                // Enregistrer les images supplémentaires dans product_images
+                if (!empty($galleryImages)) {
+                    $imgStmt = $pdo->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (:product_id, :image_url, :sort_order)");
+                    foreach ($galleryImages as $idx => $url) {
+                        $imgStmt->execute([
+                            ':product_id' => $newProductId,
+                            ':image_url' => $url,
+                            ':sort_order' => $idx
+                        ]);
+                    }
+                }
+
+                // Enregistrer les tailles sélectionnées
+                if (!empty($selectedSizes)) {
+                    $sizeStmt = $pdo->prepare("INSERT IGNORE INTO product_sizes (product_id, size_id) VALUES (:product_id, :size_id)");
+                    foreach ($selectedSizes as $sizeId) {
+                        $sizeStmt->execute([
+                            ':product_id' => $newProductId,
+                            ':size_id' => (int)$sizeId
+                        ]);
+                    }
+                }
+
+                $pdo->commit();
 
                 $_SESSION['message'] = 'Produit ajouté avec succès.';
                 $_SESSION['message_type'] = 'success';
@@ -89,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
 
             } catch (PDOException $e) {
+                if ($pdo->inTransaction()) { $pdo->rollBack(); }
                 $errors[] = 'Erreur lors de l\'ajout : ' . $e->getMessage();
             }
         }
@@ -217,32 +304,59 @@ include 'layouts/header.php';
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="category_id" class="form-label">
+                                                <i class="fas fa-layer-group me-1"></i>Catégorie
+                                            </label>
+                                            <select class="form-select" id="category_id" name="category_id">
+                                                <option value="">-- Aucune --</option>
+                                                <?php foreach ($categories as $cat): ?>
+                                                    <option value="<?php echo (int)$cat['id']; ?>" <?php echo ((int)($categoryId ?? 0) === (int)$cat['id']) ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($cat['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-ruler-combined me-1"></i>Tailles disponibles
+                                            </label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <?php foreach ($sizes as $size): ?>
+                                                    <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="checkbox" id="size_<?php echo $size['id']; ?>" name="sizes[]" value="<?php echo (int)$size['id']; ?>" <?php echo in_array((int)$size['id'], $selectedSizes ?? []) ? 'checked' : ''; ?>>
+                                                        <label class="form-check-label" for="size_<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['name']); ?></label>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <div class="form-text">Sélectionnez plusieurs tailles si nécessaire</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label for="image" class="form-label">
-                                        <i class="fas fa-image me-1"></i>Image du produit
+                                    <label for="images" class="form-label">
+                                        <i class="fas fa-images me-1"></i>Photos du produit
                                     </label>
                                     <input type="file" 
                                            class="form-control" 
-                                           id="image" 
-                                           name="image" 
+                                           id="images" 
+                                           name="images[]" 
                                            accept="image/jpeg,image/png,image/jpg"
-                                           data-preview="imagePreview">
+                                           multiple>
                                     <div class="form-text">
-                                        Formats acceptés : JPG, PNG, JPEG<br>
-                                        Taille maximum : 2MB
+                                        Formats acceptés : JPG, PNG, JPEG. Max 5 images, 2MB chacune
                                     </div>
-                                    
-                                    <!-- Aperçu de l'image -->
-                                    <div class="mt-3">
-                                        <img id="imagePreview" 
-                                             src="#" 
-                                             alt="Aperçu" 
-                                             class="img-thumbnail" 
-                                             style="max-width: 100%; max-height: 200px; display: none;">
-                                    </div>
+
+                                    <!-- Aperçus -->
+                                    <div id="imagesPreview" class="mt-3 d-flex flex-wrap gap-2"></div>
                                 </div>
 
                                 <!-- Conseils -->

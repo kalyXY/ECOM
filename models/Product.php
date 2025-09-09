@@ -158,6 +158,19 @@ class Product {
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':id' => $id]);
             $product = $stmt->fetch();
+
+            if ($product) {
+                // Récupérer la galerie d'images
+                $imgStmt = $this->pdo->prepare("SELECT image_url FROM product_images WHERE product_id = :pid ORDER BY sort_order ASC, id ASC");
+                $imgStmt->execute([':pid' => $id]);
+                $images = array_column($imgStmt->fetchAll(), 'image_url');
+                $product['images'] = $images;
+
+                // Récupérer les tailles disponibles
+                $sizeStmt = $this->pdo->prepare("SELECT s.id, s.name FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
+                $sizeStmt->execute([':pid' => $id]);
+                $product['sizes'] = $sizeStmt->fetchAll();
+            }
             
             if ($product) {
                 Cache::set($cacheKey, $product, 1800); // 30 minutes

@@ -61,6 +61,27 @@ CREATE TABLE IF NOT EXISTS products (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Table des images produits (one-to-many)
+CREATE TABLE IF NOT EXISTS product_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_product (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table pivot pour tailles multiples (many-to-many)
+CREATE TABLE IF NOT EXISTS product_sizes (
+    product_id INT NOT NULL,
+    size_id INT NOT NULL,
+    stock INT DEFAULT NULL, -- stock optionnel par taille; NULL => utiliser stock global
+    PRIMARY KEY (product_id, size_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Table des commandes (pour les statistiques)
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,

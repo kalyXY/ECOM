@@ -45,22 +45,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Image preview
+    // Image previews (single and multiple)
     const imageInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
     imageInputs.forEach(function(input) {
         input.addEventListener('change', function(event) {
-            const file = event.target.files[0];
+            const files = Array.from(event.target.files || []);
+            const multiPreview = document.getElementById('imagesPreview');
             const previewId = input.getAttribute('data-preview');
-            const preview = document.getElementById(previewId);
-            
-            if (file && preview) {
+            const singlePreview = previewId ? document.getElementById(previewId) : null;
+
+            if (multiPreview && input.multiple) {
+                multiPreview.innerHTML = '';
+                files.slice(0, 5).forEach(function(file) {
+                    const maxSize = 2 * 1024 * 1024;
+                    if (file.size > maxSize) return;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'img-thumbnail';
+                        img.style.width = '100px';
+                        img.style.height = '100px';
+                        img.style.objectFit = 'cover';
+                        multiPreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else if (singlePreview && files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    preview.classList.add('fade-in');
+                    singlePreview.src = e.target.result;
+                    singlePreview.style.display = 'block';
+                    singlePreview.classList.add('fade-in');
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(files[0]);
             }
         });
     });
