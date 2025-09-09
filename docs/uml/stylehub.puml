@@ -1,0 +1,103 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class User {
+  +id: INT
+  +username: VARCHAR
+  +password_hash: VARCHAR
+  +email: VARCHAR
+  +full_name: VARCHAR
+  +avatar: VARCHAR
+  +role: ENUM(admin,user)
+  +last_login: TIMESTAMP
+}
+
+class Category {
+  +id: INT
+  +name: VARCHAR
+  +slug: VARCHAR
+  +description: TEXT
+  +image_url: VARCHAR
+  +parent_id: INT
+  +status: ENUM(active,inactive)
+}
+
+class Product {
+  +id: INT
+  +name: VARCHAR
+  +description: TEXT
+  +price: DECIMAL
+  +sale_price: DECIMAL
+  +sku: VARCHAR
+  +stock: INT
+  +brand: VARCHAR
+  +color: VARCHAR
+  +size: VARCHAR
+  +material: VARCHAR
+  +gender: ENUM(homme,femme,unisexe)
+  +season: ENUM(printemps,été,automne,hiver,toute_saison)
+  +image_url: VARCHAR
+  +gallery: TEXT
+  +tags: TEXT
+  +featured: BOOLEAN
+  +status: ENUM(active,inactive,out_of_stock)
+  +view_count: INT
+  +rating: DECIMAL
+}
+
+class Size {
+  +id: INT
+  +name: VARCHAR
+  +category: VARCHAR
+}
+
+class Color {
+  +id: INT
+  +name: VARCHAR
+  +hex_code: VARCHAR
+}
+
+class ProductVariant {
+  +id: INT
+  +sku: VARCHAR
+  +stock: INT
+  +price_modifier: DECIMAL
+}
+
+class Customer {
+  +id: INT
+  +name: VARCHAR
+  +email: VARCHAR
+  +phone: VARCHAR
+  +address: TEXT
+  +city: VARCHAR
+  +postal_code: VARCHAR
+  +country: VARCHAR
+}
+
+class Order {
+  +id: INT
+  +customer_name: VARCHAR
+  +customer_email: VARCHAR
+  +total_amount: DECIMAL
+  +status: ENUM(pending,processing,shipped,delivered,cancelled)
+}
+
+class OrderItem {
+  +id: INT
+  +quantity: INT
+  +unit_price: DECIMAL
+  +total_price: DECIMAL
+}
+
+Category "1" <-- "0..*" Category : parent
+Category "1" <-- "0..*" Product : category
+Product "1" <-- "0..*" ProductVariant : product
+Size "1" <-- "0..*" ProductVariant : size
+Color "1" <-- "0..*" ProductVariant : color
+Customer "1" <-- "0..*" Order : customer
+Order "1" <-- "1..*" OrderItem : items
+Product "1" <-- "1..*" OrderItem : product
+ProductVariant "0..1" <-- "0..*" OrderItem : variant
+
+@enduml
