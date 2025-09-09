@@ -1,187 +1,166 @@
 <?php
-require_once 'config/bootstrap.php';
-require_once 'models/Product.php';
-
-// Définir le code de réponse 404
-http_response_code(404);
-
+require_once 'includes/config.php';
 $pageTitle = 'Page non trouvée';
-
-// Obtenir des produits populaires pour la page 404
-$productModel = new Product($pdo);
-$suggestedProducts = [];
-try {
-    $suggestedProducts = $productModel->getPopular(4);
-} catch (Exception $e) {
-    $suggestedProducts = [];
-}
+http_response_code(404);
 ?>
 
 <?php include 'includes/header.php'; ?>
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center">
-            <!-- Illustration 404 -->
-            <div class="error-illustration mb-4">
-                <div class="error-number">404</div>
-                <div class="error-icon">
-                    <i class="fas fa-search fa-4x text-muted"></i>
-                </div>
-            </div>
-            
-            <!-- Message d'erreur -->
-            <h1 class="h2 mb-3">Oups ! Page introuvable</h1>
-            <p class="lead text-muted mb-4">
-                La page que vous recherchez n'existe pas ou a été déplacée. 
-                Ne vous inquiétez pas, nous avons d'autres trésors à vous proposer !
-            </p>
-            
-            <!-- Actions -->
-            <div class="error-actions mb-5">
-                <a href="index.php" class="btn btn-primary btn-lg me-3">
-                    <i class="fas fa-home me-2"></i>Retour à l'accueil
-                </a>
-                <a href="products.php" class="btn btn-outline-primary btn-lg">
-                    <i class="fas fa-tshirt me-2"></i>Voir nos produits
-                </a>
-            </div>
-            
-            <!-- Barre de recherche -->
-            <div class="error-search">
-                <h5 class="mb-3">Ou recherchez ce que vous cherchiez :</h5>
-                <form method="GET" action="products.php" class="d-flex justify-content-center">
-                    <div class="input-group" style="max-width: 400px;">
-                        <input type="text" name="search" class="form-control form-control-lg" 
-                               placeholder="Rechercher un produit..." autofocus>
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
+<!-- 404 Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <!-- 404 Illustration -->
+                <div class="mb-5">
+                    <div class="display-1 text-primary mb-3" style="font-size: 8rem; font-weight: 700;">
+                        404
                     </div>
-                </form>
+                    <h1 class="fashion-title h2 mb-3">Oups ! Page non trouvée</h1>
+                    <p class="lead text-muted mb-4">
+                        La page que vous recherchez semble avoir disparu de notre dressing. 
+                        Mais ne vous inquiétez pas, nous avons plein d'autres merveilles à vous montrer !
+                    </p>
+                </div>
+
+                <!-- Fashion illustration -->
+                <div class="mb-5">
+                    <i class="fas fa-tshirt text-muted" style="font-size: 6rem; opacity: 0.3;"></i>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-column flex-md-row gap-3 justify-content-center mb-5">
+                    <a href="index.php" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>Retour à l'Accueil
+                    </a>
+                    <a href="products.php" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-tshirt me-2"></i>Découvrir nos Collections
+                    </a>
+                </div>
+
+                <!-- Search -->
+                <div class="mb-5">
+                    <h4 class="fashion-title mb-3">Ou recherchez ce que vous cherchez</h4>
+                    <form method="GET" action="products.php" class="d-flex justify-content-center">
+                        <div class="input-group" style="max-width: 400px;">
+                            <input type="search" name="search" class="form-control form-control-lg" 
+                                   placeholder="Rechercher un article...">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Popular links -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <h5 class="fashion-title mb-3">Pages populaires</h5>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="products.php?gender=femme" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-female me-1"></i>Femme
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="products.php?gender=homme" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-male me-1"></i>Homme
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="products.php?category=accessoires" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-gem me-1"></i>Accessoires
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="contact.php" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-envelope me-1"></i>Contact
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Produits suggérés -->
-    <?php if (!empty($suggestedProducts)): ?>
-    <div class="row mt-5">
-        <div class="col-12">
-            <h4 class="text-center mb-4">Découvrez nos produits populaires</h4>
-            <div class="row g-3">
-                <?php foreach ($suggestedProducts as $product): ?>
-                    <div class="col-6 col-md-3">
-                        <div class="product-card" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
-                            <div class="product-image-container">
-                                <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
-                                    <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                         class="product-image" 
-                                         alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                <?php else: ?>
-                                    <div class="product-image d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-tshirt fa-3x text-muted"></i>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="product-info">
-                                <h6 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h6>
-                                <div class="product-price-container">
-                                    <span class="product-price"><?php echo App::formatPrice($product['price']); ?></span>
+</section>
+
+<!-- Help Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h3 class="fashion-title mb-4">Besoin d'aide ?</h3>
+                <p class="text-muted mb-4">
+                    Notre équipe est là pour vous aider à trouver ce que vous cherchez
+                </p>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center p-4">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-headset fa-lg"></i>
                                 </div>
+                                <h5 class="fashion-title">Support Client</h5>
+                                <p class="text-muted small mb-3">
+                                    Notre équipe est disponible pour répondre à toutes vos questions
+                                </p>
+                                <a href="contact.php" class="btn btn-outline-primary btn-sm">
+                                    Nous contacter
+                                </a>
                             </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-    <?php endif; ?>
-    
-    <!-- Liens utiles -->
-    <div class="row mt-5">
-        <div class="col-md-4">
-            <div class="help-card text-center p-4">
-                <i class="fas fa-headset fa-3x text-primary mb-3"></i>
-                <h5>Besoin d'aide ?</h5>
-                <p class="text-muted">Notre équipe est là pour vous aider</p>
-                <a href="contact.php" class="btn btn-outline-primary">Nous contacter</a>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="help-card text-center p-4">
-                <i class="fas fa-tags fa-3x text-success mb-3"></i>
-                <h5>Nos catégories</h5>
-                <p class="text-muted">Explorez toutes nos collections mode</p>
-                <div class="d-flex flex-wrap justify-content-center gap-2">
-                    <a href="products.php?gender=femme" class="badge bg-light text-dark">Femme</a>
-                    <a href="products.php?gender=homme" class="badge bg-light text-dark">Homme</a>
-                    <a href="products.php?category=accessoires" class="badge bg-light text-dark">Accessoires</a>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center p-4">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-question-circle fa-lg"></i>
+                                </div>
+                                <h5 class="fashion-title">FAQ</h5>
+                                <p class="text-muted small mb-3">
+                                    Consultez nos questions fréquemment posées
+                                </p>
+                                <a href="contact.php#faq" class="btn btn-outline-primary btn-sm">
+                                    Voir la FAQ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center p-4">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-ruler fa-lg"></i>
+                                </div>
+                                <h5 class="fashion-title">Guide des Tailles</h5>
+                                <p class="text-muted small mb-3">
+                                    Trouvez la taille parfaite avec notre guide
+                                </p>
+                                <button class="btn btn-outline-primary btn-sm size-guide-btn">
+                                    Voir le guide
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="help-card text-center p-4">
-                <i class="fas fa-fire fa-3x text-warning mb-3"></i>
-                <h5>Tendances</h5>
-                <p class="text-muted">Découvrez les dernières nouveautés</p>
-                <a href="products.php?featured=1" class="btn btn-outline-warning">Voir les tendances</a>
-            </div>
-        </div>
     </div>
-</div>
+</section>
 
 <style>
-.error-illustration {
-    position: relative;
-    margin: 2rem 0;
-}
-
-.error-number {
-    font-size: 8rem;
-    font-weight: 900;
-    color: var(--primary-color);
-    line-height: 1;
-    opacity: 0.1;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-}
-
-.error-icon {
-    position: relative;
-    z-index: 2;
-    padding: 2rem 0;
-}
-
-.help-card {
-    background: var(--bg-primary);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease;
-    height: 100%;
-}
-
-.help-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-md);
-}
-
-.error-actions .btn {
-    margin-bottom: 1rem;
+.display-1 {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 @media (max-width: 768px) {
-    .error-number {
-        font-size: 5rem;
-    }
-    
-    .error-actions .btn {
-        display: block;
-        width: 100%;
-        margin-bottom: 1rem;
+    .display-1 {
+        font-size: 5rem !important;
     }
 }
 </style>

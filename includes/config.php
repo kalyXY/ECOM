@@ -13,8 +13,13 @@ if (!isset($_SESSION['cart'])) {
 }
 
 // Fonctions utilitaires pour le front-office
-function formatPrice($price) {
-    return number_format((float)$price, 2, ',', ' ') . ' €';
+if (!function_exists('formatPrice')) {
+    function formatPrice($price) {
+        if (class_exists('App') && method_exists('App', 'formatPrice')) {
+            return App::formatPrice($price);
+        }
+        return number_format((float)$price, 2, ',', ' ') . ' €';
+    }
 }
 
 function addToCart($productId, $quantity = 1) {
@@ -71,6 +76,13 @@ function clearCart() {
 // Récupérer les paramètres du site
 function getSiteSettings() {
     global $pdo;
+
+    // Cache en mémoire pour la durée de la requête
+    static $cachedSettings = null;
+    if ($cachedSettings !== null) {
+        return $cachedSettings;
+    }
+
     $settings = [
         'site_name' => 'StyleHub',
         'site_description' => 'Votre destination mode pour un style unique et tendance',
@@ -88,6 +100,7 @@ function getSiteSettings() {
         // Table settings n'existe pas, utiliser les valeurs par défaut
     }
     
-    return $settings;
+    $cachedSettings = $settings;
+    return $cachedSettings;
 }
 ?>

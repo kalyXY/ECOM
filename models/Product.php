@@ -80,10 +80,8 @@ class Product {
         
         $whereClause = implode(' AND ', $where);
         
-        // Compter le total
-        $countSql = "SELECT COUNT(*) FROM products p 
-                     LEFT JOIN categories c ON p.category_id = c.id 
-                     WHERE {$whereClause}";
+        // Compter le total (pas besoin de joindre categories pour un COUNT)
+        $countSql = "SELECT COUNT(*) FROM products p WHERE {$whereClause}";
         $countStmt = $this->pdo->prepare($countSql);
         $countStmt->execute($params);
         $total = $countStmt->fetchColumn();

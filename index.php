@@ -128,7 +128,10 @@ $pageTitle = 'Accueil';
             <?php foreach ($categories as $category): ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card category-card h-100 border-0 shadow-sm">
-                        <?php if ($category['image_url'] && file_exists($category['image_url'])): ?>
+                        <?php 
+                        $img = $category['image_url'];
+                        $isLocal = $img && !preg_match('/^https?:\/\//i', $img);
+                        if ($img && $isLocal && file_exists($img)): ?>
                             <img src="<?php echo htmlspecialchars($category['image_url']); ?>" 
                                  class="card-img-top" style="height: 200px; object-fit: cover;" 
                                  alt="<?php echo htmlspecialchars($category['name']); ?>">
@@ -185,7 +188,10 @@ $pageTitle = 'Accueil';
                         
                         <!-- Image du produit -->
                         <div class="product-image-container">
-                            <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
+                            <?php 
+                            $pimg = $product['image_url'];
+                            $pIsLocal = $pimg && !preg_match('/^https?:\/\//i', $pimg);
+                            if ($pimg && $pIsLocal && file_exists($pimg)): ?>
                                 <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
                                      class="product-image" 
                                      alt="<?php echo htmlspecialchars($product['name']); ?>">

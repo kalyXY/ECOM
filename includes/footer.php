@@ -56,18 +56,23 @@
                     <h6 class="fw-bold mb-3">Informations</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <a href="#" class="text-light-emphasis text-decoration-none">
+                            <a href="about.php" class="text-light-emphasis text-decoration-none">
                                 <i class="fas fa-info-circle me-1"></i>À propos
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="#" class="text-light-emphasis text-decoration-none">
-                                <i class="fas fa-shield-alt me-1"></i>Politique de confidentialité
+                            <a href="careers.php" class="text-light-emphasis text-decoration-none">
+                                <i class="fas fa-briefcase me-1"></i>Carrières
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="#" class="text-light-emphasis text-decoration-none">
+                            <a href="terms.php" class="text-light-emphasis text-decoration-none">
                                 <i class="fas fa-file-contract me-1"></i>Conditions d'utilisation
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="privacy.php" class="text-light-emphasis text-decoration-none">
+                                <i class="fas fa-shield-alt me-1"></i>Politique de confidentialité
                             </a>
                         </li>
                         <li class="mb-2">

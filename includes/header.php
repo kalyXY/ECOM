@@ -1,6 +1,22 @@
 <?php
-$siteSettings = getSiteSettings();
-$cartCount = getCartItemCount();
+// Vérifier si les fonctions existent, sinon utiliser des valeurs par défaut
+if (function_exists('getSiteSettings')) {
+    $siteSettings = getSiteSettings();
+} else {
+    $siteSettings = [
+        'site_name' => 'StyleHub',
+        'site_description' => 'Votre destination mode pour un style unique et tendance',
+        'site_email' => 'contact@stylehub.fr',
+        'site_phone' => '01 42 86 95 73',
+        'site_address' => '25 Avenue des Champs-Élysées, 75008 Paris'
+    ];
+}
+
+if (function_exists('getCartItemCount')) {
+    $cartCount = getCartItemCount();
+} else {
+    $cartCount = 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -36,7 +52,7 @@ $cartCount = getCartItemCount();
     <meta property="og:type" content="website">
     <meta property="og:title" content="<?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name']); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($siteSettings['site_description']); ?>">
-    <meta property="og:url" content="<?php echo App::currentUrl(); ?>">
+    <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'); ?>">
     <meta property="og:site_name" content="<?php echo htmlspecialchars($siteSettings['site_name']); ?>">
     <meta property="og:locale" content="fr_FR">
     
@@ -54,10 +70,10 @@ $cartCount = getCartItemCount();
         "@type" => "WebSite",
         "name" => $siteSettings['site_name'],
         "description" => $siteSettings['site_description'],
-        "url" => App::url(),
+        "url" => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
         "potentialAction" => [
             "@type" => "SearchAction",
-            "target" => App::url("products.php?search={search_term_string}"),
+            "target" => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/products.php?search={search_term_string}",
             "query-input" => "required name=search_term_string"
         ]
     ];
@@ -69,7 +85,7 @@ $cartCount = getCartItemCount();
             "@type" => "Product",
             "name" => $product['name'],
             "description" => $product['description'],
-            "image" => App::url($product['image_url']),
+            "image" => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/' . ltrim($product['image_url'], '/'),
             "brand" => [
                 "@type" => "Brand",
                 "name" => $product['brand'] ?: $siteSettings['site_name']
@@ -92,7 +108,7 @@ $cartCount = getCartItemCount();
     </script>
     
     <!-- Liens canoniques et alternates -->
-    <link rel="canonical" href="<?php echo App::currentUrl(); ?>">
+    <link rel="canonical" href="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/'); ?>">
     
     <!-- DNS prefetch pour les performances -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">

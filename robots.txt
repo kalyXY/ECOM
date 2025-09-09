@@ -6,15 +6,36 @@ Disallow: /admin/
 Disallow: /config/
 Disallow: /cache/
 Disallow: /api/
-Disallow: *.php$
+Disallow: /includes/
+
+# Autoriser les pages importantes
+Allow: /index.php
+Allow: /products.php
+Allow: /product.php
+Allow: /about.php
+Allow: /contact.php
+Allow: /careers.php
+Allow: /terms.php
+Allow: /privacy.php
 
 # Autoriser les ressources importantes
 Allow: /assets/
 Allow: /uploads/
 Allow: /sitemap.php
 
+# Interdire les pages privées
+Disallow: /cart.php
+Disallow: /checkout.php
+
 # Sitemap
-Sitemap: http://localhost/sitemap.php
+Sitemap: https://www.stylehub.fr/sitemap.php
 
 # Délai entre les requêtes (en secondes)
 Crawl-delay: 1
+
+# Règles spécifiques pour les moteurs de recherche
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
