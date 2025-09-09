@@ -153,23 +153,62 @@ class Product {
             $sql = "SELECT p.*, c.name as category_name, c.slug as category_slug
                     FROM products p 
                     LEFT JOIN categories c ON p.category_id = c.id 
-                    WHERE p.id = :id AND p.status = 'active'";
+                    WHERE p.id = :id";
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':id' => $id]);
             $product = $stmt->fetch();
 
             if ($product) {
-                // Récupérer la galerie d'images
-                $imgStmt = $this->pdo->prepare("SELECT image_url FROM product_images WHERE product_id = :pid ORDER BY sort_order ASC, id ASC");
+                // Récupérer toutes les images
+                $imgStmt = $this->pdo->prepare("SELECT image_url, sort_order FROM product_images WHERE product_id = :pid ORDER BY sort_order ASC, id ASC");
                 $imgStmt->execute([':pid' => $id]);
-                $images = array_column($imgStmt->fetchAll(), 'image_url');
-                $product['images'] = $images;
+                $images = $imgStmt->fetchAll();
+                $product['images'] = array_column($images, 'image_url');
+                
+                // Si pas d'images dans product_images mais image_url existe, l'ajouter
+                if (empty($product['images']) && !empty($product['image_url'])) {
+                    $product['images'] = [$product['image_url']];
+                }
 
-                // Récupérer les tailles disponibles
-                $sizeStmt = $this->pdo->prepare("SELECT s.id, s.name, ps.stock as size_stock FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
+                // Récupérer les tailles disponibles avec stock
+                $sizeStmt = $this->pdo->prepare("
+                    SELECT s.id, s.name, s.category as size_category, ps.stock as size_stock 
+                    FROM product_sizes ps 
+                    JOIN sizes s ON ps.size_id = s.id 
+                    WHERE ps.product_id = :pid 
+                    ORDER BY s.sort_order ASC, s.name ASC
+                ");
                 $sizeStmt->execute([':pid' => $id]);
                 $product['sizes'] = $sizeStmt->fetchAll();
+                
+                // Récupérer les couleurs disponibles (si table existe)
+                try {
+                    $colorStmt = $this->pdo->prepare("
+                        SELECT c.id, c.name, c.hex_code 
+                        FROM product_colors pc 
+                        JOIN colors c ON pc.color_id = c.id 
+                        WHERE pc.product_id = :pid 
+                        ORDER BY c.name ASC
+                    ");
+                    $colorStmt->execute([':pid' => $id]);
+                    $product['colors'] = $colorStmt->fetchAll();
+                } catch (PDOException $e) {
+                    // Table product_colors n'existe pas encore
+                    $product['colors'] = [];
+                }
+                
+                // Calculer le stock disponible par taille
+                $product['available_sizes'] = array_filter($product['sizes'], function($size) {
+                    return $size['size_stock'] === null || $size['size_stock'] > 0;
+                });
+                
+                // Calculer le prix effectif
+                $product['effective_price'] = !empty($product['sale_price']) ? $product['sale_price'] : $product['price'];
+                $product['has_discount'] = !empty($product['sale_price']) && $product['sale_price'] < $product['price'];
+                if ($product['has_discount']) {
+                    $product['discount_percentage'] = round((($product['price'] - $product['sale_price']) / $product['price']) * 100);
+                }
             }
             
             if ($product) {
@@ -197,30 +236,63 @@ class Product {
     }
     
     /**
-     * Créer un nouveau produit
+     * Créer un nouveau produit avec images et tailles
      */
     public function create($data) {
         try {
             $this->pdo->beginTransaction();
             
+            // Insérer le produit principal
             $sql = "INSERT INTO products (
                 name, description, price, sale_price, sku, stock, category_id,
-                brand, color, size, material, gender, season, image_url,
-                gallery, tags, featured, status, created_at
+                brand, material, gender, season, image_url, featured, status, created_at
             ) VALUES (
                 :name, :description, :price, :sale_price, :sku, :stock, :category_id,
-                :brand, :color, :size, :material, :gender, :season, :image_url,
-                :gallery, :tags, :featured, :status, NOW()
+                :brand, :material, :gender, :season, :image_url, :featured, 'active', NOW()
             )";
             
             $stmt = $this->pdo->prepare($sql);
-            $result = $stmt->execute($data);
+            $result = $stmt->execute([
+                ':name' => $data['name'],
+                ':description' => $data['description'],
+                ':price' => $data['price'],
+                ':sale_price' => $data['sale_price'] ?? null,
+                ':sku' => $data['sku'] ?? null,
+                ':stock' => $data['stock'] ?? 0,
+                ':category_id' => $data['category_id'] ?? null,
+                ':brand' => $data['brand'] ?? null,
+                ':material' => $data['material'] ?? null,
+                ':gender' => $data['gender'] ?? 'unisexe',
+                ':season' => $data['season'] ?? 'toute_saison',
+                ':image_url' => $data['image_url'] ?? null,
+                ':featured' => $data['featured'] ?? 0
+            ]);
             
             if ($result) {
                 $productId = $this->pdo->lastInsertId();
                 
+                // Ajouter les images
+                if (!empty($data['images'])) {
+                    $this->addProductImages($productId, $data['images']);
+                }
+                
+                // Ajouter les tailles
+                if (!empty($data['sizes'])) {
+                    $this->addProductSizes($productId, $data['sizes']);
+                }
+                
+                // Ajouter les couleurs
+                if (!empty($data['colors'])) {
+                    $this->addProductColors($productId, $data['colors']);
+                }
+                
                 // Log de l'action
-                Security::logAction('product_created', ['product_id' => $productId, 'name' => $data['name']]);
+                Security::logAction('product_created', [
+                    'product_id' => $productId, 
+                    'name' => $data['name'],
+                    'images_count' => count($data['images'] ?? []),
+                    'sizes_count' => count($data['sizes'] ?? [])
+                ]);
                 
                 $this->pdo->commit();
                 
@@ -459,6 +531,127 @@ class Product {
         }
         
         return $results;
+    }
+    
+    /**
+     * Ajouter des images à un produit
+     */
+    private function addProductImages($productId, $images) {
+        $stmt = $this->pdo->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
+        foreach ($images as $index => $imageUrl) {
+            $stmt->execute([$productId, $imageUrl, $index]);
+        }
+    }
+    
+    /**
+     * Ajouter des tailles à un produit
+     */
+    private function addProductSizes($productId, $sizes) {
+        $stmt = $this->pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (?, ?, ?)");
+        foreach ($sizes as $sizeData) {
+            $sizeId = is_array($sizeData) ? $sizeData['id'] : $sizeData;
+            $stock = is_array($sizeData) ? ($sizeData['stock'] ?? null) : null;
+            $stmt->execute([$productId, $sizeId, $stock]);
+        }
+    }
+    
+    /**
+     * Ajouter des couleurs à un produit
+     */
+    private function addProductColors($productId, $colors) {
+        try {
+            $stmt = $this->pdo->prepare("INSERT INTO product_colors (product_id, color_id) VALUES (?, ?)");
+            foreach ($colors as $colorId) {
+                $stmt->execute([$productId, $colorId]);
+            }
+        } catch (PDOException $e) {
+            // Table product_colors n'existe pas encore, on ignore
+        }
+    }
+    
+    /**
+     * Supprimer les images d'un produit
+     */
+    public function deleteProductImages($productId, $imageUrls = null) {
+        if ($imageUrls === null) {
+            // Supprimer toutes les images
+            $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = ?");
+            $stmt->execute([$productId]);
+        } else {
+            // Supprimer des images spécifiques
+            $placeholders = str_repeat('?,', count($imageUrls) - 1) . '?';
+            $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = ? AND image_url IN ($placeholders)");
+            $stmt->execute(array_merge([$productId], $imageUrls));
+        }
+    }
+    
+    /**
+     * Mettre à jour les tailles d'un produit
+     */
+    public function updateProductSizes($productId, $sizes) {
+        // Supprimer les anciennes tailles
+        $stmt = $this->pdo->prepare("DELETE FROM product_sizes WHERE product_id = ?");
+        $stmt->execute([$productId]);
+        
+        // Ajouter les nouvelles tailles
+        if (!empty($sizes)) {
+            $this->addProductSizes($productId, $sizes);
+        }
+    }
+    
+    /**
+     * Obtenir le stock disponible pour une taille spécifique
+     */
+    public function getSizeStock($productId, $sizeId) {
+        $stmt = $this->pdo->prepare("SELECT stock FROM product_sizes WHERE product_id = ? AND size_id = ?");
+        $stmt->execute([$productId, $sizeId]);
+        $result = $stmt->fetchColumn();
+        
+        // Si pas de stock spécifique, utiliser le stock global
+        if ($result === null || $result === false) {
+            $stmt = $this->pdo->prepare("SELECT stock FROM products WHERE id = ?");
+            $stmt->execute([$productId]);
+            return (int) $stmt->fetchColumn();
+        }
+        
+        return (int) $result;
+    }
+    
+    /**
+     * Mettre à jour le stock d'une taille spécifique
+     */
+    public function updateSizeStock($productId, $sizeId, $quantity, $operation = 'set') {
+        try {
+            $this->pdo->beginTransaction();
+            
+            if ($operation === 'increment') {
+                $sql = "UPDATE product_sizes SET stock = COALESCE(stock, 0) + ? WHERE product_id = ? AND size_id = ?";
+            } elseif ($operation === 'decrement') {
+                $sql = "UPDATE product_sizes SET stock = GREATEST(0, COALESCE(stock, 0) - ?) WHERE product_id = ? AND size_id = ?";
+            } else {
+                $sql = "UPDATE product_sizes SET stock = ? WHERE product_id = ? AND size_id = ?";
+            }
+            
+            $stmt = $this->pdo->prepare($sql);
+            $result = $stmt->execute([$quantity, $productId, $sizeId]);
+            
+            if ($result) {
+                $this->pdo->commit();
+                
+                // Invalider le cache
+                Cache::delete("product_{$productId}");
+                
+                return ['success' => true, 'new_stock' => $this->getSizeStock($productId, $sizeId)];
+            }
+            
+            $this->pdo->rollBack();
+            return ['success' => false, 'error' => 'Erreur lors de la mise à jour du stock'];
+            
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            error_log("Error updating size stock: " . $e->getMessage());
+            return ['success' => false, 'error' => 'Erreur système'];
+        }
     }
     
     /**

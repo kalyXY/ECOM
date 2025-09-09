@@ -119,4 +119,12 @@ function generateSlug($text) {
     return $text;
 }
 }
+
+// Fonction pour valider les uploads d'images (compatibilité)
+if (!function_exists('isValidImageUpload')) {
+function isValidImageUpload($file) {
+    $validation = Security::validateImageUpload($file);
+    return $validation['valid'];
+}
+}
 ?>
