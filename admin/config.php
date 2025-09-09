@@ -33,8 +33,13 @@ function verifyCSRFToken($token) {
 // Fonction pour redimensionner les images
 if (!function_exists('resizeImage')) {
 function resizeImage($source, $destination, $maxWidth = 800, $maxHeight = 600) {
-    $imageInfo = getimagesize($source);
-    if (!$imageInfo) return false;
+    // Si l'extension GD n'est pas chargée, copier simplement l'image sans redimensionnement
+    if (!extension_loaded('gd')) {
+        return @copy($source, $destination);
+    }
+
+    $imageInfo = @getimagesize($source);
+    if (!$imageInfo) return @copy($source, $destination);
     
     $width = $imageInfo[0];
     $height = $imageInfo[1];
@@ -42,20 +47,27 @@ function resizeImage($source, $destination, $maxWidth = 800, $maxHeight = 600) {
     
     // Calculer les nouvelles dimensions
     $ratio = min($maxWidth / $width, $maxHeight / $height);
+    // Si l'image est déjà plus petite que la cible, conserver la taille et juste copier
+    if ($ratio >= 1) {
+        return @copy($source, $destination);
+    }
     $newWidth = (int)($width * $ratio);
     $newHeight = (int)($height * $ratio);
     
-    // Créer l'image source
+    // Créer l'image source (en gardant des garde-fous)
     switch ($type) {
         case IMAGETYPE_JPEG:
-            $sourceImage = imagecreatefromjpeg($source);
+            if (!function_exists('imagecreatefromjpeg')) return @copy($source, $destination);
+            $sourceImage = @imagecreatefromjpeg($source);
             break;
         case IMAGETYPE_PNG:
-            $sourceImage = imagecreatefrompng($source);
+            if (!function_exists('imagecreatefrompng')) return @copy($source, $destination);
+            $sourceImage = @imagecreatefrompng($source);
             break;
         default:
-            return false;
+            return @copy($source, $destination);
     }
+    if (!$sourceImage) return @copy($source, $destination);
     
     // Créer l'image de destination
     $destImage = imagecreatetruecolor($newWidth, $newHeight);
@@ -64,28 +76,37 @@ function resizeImage($source, $destination, $maxWidth = 800, $maxHeight = 600) {
     if ($type == IMAGETYPE_PNG) {
         imagealphablending($destImage, false);
         imagesavealpha($destImage, true);
+        $transparent = imagecolorallocatealpha($destImage, 0, 0, 0, 127);
+        imagefilledrectangle($destImage, 0, 0, $newWidth, $newHeight, $transparent);
     }
     
     // Redimensionner
     imagecopyresampled($destImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
     
     // Sauvegarder
+    $result = false;
     switch ($type) {
         case IMAGETYPE_JPEG:
-            $result = imagejpeg($destImage, $destination, 85);
+            if (function_exists('imagejpeg')) {
+                $result = @imagejpeg($destImage, $destination, 85);
+            }
             break;
         case IMAGETYPE_PNG:
-            $result = imagepng($destImage, $destination);
+            if (function_exists('imagepng')) {
+                $result = @imagepng($destImage, $destination);
+            }
             break;
-        default:
-            $result = false;
     }
     
     // Nettoyer la mémoire
     imagedestroy($sourceImage);
     imagedestroy($destImage);
     
-    return $result;
+    // Si la sauvegarde a échoué, fallback: copier l'original
+    if (!$result) {
+        return @copy($source, $destination);
+    }
+    return true;
 }
 }
 
