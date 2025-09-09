@@ -3,7 +3,7 @@
     <div class="sidebar-header">
         <a href="index.php" class="sidebar-brand">
             <i class="fas fa-store"></i>
-            <span>E-Commerce Admin</span>
+            <span><?php echo htmlspecialchars(($siteSettings['site_name'] ?? 'StyleHub')) . ' Admin'; ?></span>
         </a>
     </div>
     

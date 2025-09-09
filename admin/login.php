@@ -58,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - E-Commerce Admin</title>
+    <?php $siteSettings = function_exists('getSiteSettings') ? getSiteSettings() : ['site_name' => 'StyleHub']; ?>
+    <title>Connexion - <?php echo htmlspecialchars($siteSettings['site_name']); ?> Admin</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -241,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="logo">
                     <i class="fas fa-store"></i>
                 </div>
-                <h1>E-Commerce Admin</h1>
+                <h1><?php echo htmlspecialchars($siteSettings['site_name']); ?> Admin</h1>
                 <p>Connexion au back-office</p>
             </div>
             
