@@ -1,6 +1,8 @@
 <?php
 // Configuration pour le back-office admin
 require_once dirname(__DIR__) . '/config.php';
+// Charger les helpers du front pour getSiteSettings() afin d'unifier le nom du site
+@require_once dirname(__DIR__) . '/includes/config.php';
 
 // Fonctions spécifiques à l'admin
 if (!function_exists('formatPrice')) {

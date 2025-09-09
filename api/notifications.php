@@ -9,6 +9,14 @@ require_once '../config/bootstrap.php';
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Access-Control-Allow-Origin: *');
+header('Connection: keep-alive');
+header('X-Accel-Buffering: no');
+
+// Allow long-running connection and continuous flush for SSE
+@set_time_limit(0);
+ignore_user_abort(true);
+while (ob_get_level() > 0) { @ob_end_flush(); }
+ob_implicit_flush(true);
 
 // Fonction pour envoyer des données SSE
 function sendSSE($data) {
@@ -90,8 +98,10 @@ function getRealtimeStats($pdo) {
     return null;
 }
 
-// Boucle principale SSE
+// Main SSE loop (short-lived to avoid max_execution_time). Client should auto-reconnect.
 $lastCheck = 0;
+$connectionStart = time();
+$maxDurationSeconds = 55; // keep under typical 60s gateway/proxy timeouts
 while (true) {
     $currentTime = time();
     
@@ -128,6 +138,11 @@ while (true) {
         $lastCheck = $currentTime;
     }
     
+    // Stop after max duration to let client reconnect
+    if (($currentTime - $connectionStart) >= $maxDurationSeconds) {
+        break;
+    }
+
     // Pause de 5 secondes
     sleep(5);
     

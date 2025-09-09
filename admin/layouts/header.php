@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($pageTitle ?? 'Admin'); ?> - E-Commerce Admin</title>
+    <?php $siteSettings = function_exists('getSiteSettings') ? getSiteSettings() : ['site_name' => 'StyleHub']; ?>
+    <title><?php echo htmlspecialchars($pageTitle ?? 'Admin'); ?> - <?php echo htmlspecialchars($siteSettings['site_name']); ?> Admin</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

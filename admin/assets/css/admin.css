@@ -166,6 +166,11 @@ body {
     background: var(--light-color);
 }
 
+/* Expand content to full width when sidebar is collapsed */
+.admin-sidebar.collapsed ~ .admin-content {
+    margin-left: 0;
+}
+
 /* Topbar */
 .admin-topbar {
     height: var(--topbar-height);
