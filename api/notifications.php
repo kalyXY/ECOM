@@ -21,7 +21,9 @@ ob_implicit_flush(true);
 // Fonction pour envoyer des données SSE
 function sendSSE($data) {
     echo "data: " . json_encode($data) . "\n\n";
-    ob_flush();
+    if (ob_get_level()) {
+        ob_flush();
+    }
     flush();
 }
 

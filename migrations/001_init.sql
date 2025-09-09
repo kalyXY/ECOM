@@ -142,6 +142,9 @@ CREATE TABLE IF NOT EXISTS order_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Default admin
+-- Ensure legacy installations have the 'role' column
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role ENUM('admin','user') DEFAULT 'admin' AFTER avatar;
+
 INSERT INTO users (username, password_hash, email, full_name, role)
 VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@stylehub.fr', 'Administrateur StyleHub', 'admin')
 ON DUPLICATE KEY UPDATE username = VALUES(username);
