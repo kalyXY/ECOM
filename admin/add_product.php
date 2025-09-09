@@ -5,18 +5,35 @@ requireLogin();
 $errors = [];
 $success = '';
 
-// Charger catégories et tailles
+// Configuration pour les uploads
+$MAX_IMAGES = 5;
+$MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+$ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+$UPLOAD_DIR = '../uploads/';
+
+// Créer le dossier d'upload si nécessaire
+if (!is_dir($UPLOAD_DIR)) {
+    mkdir($UPLOAD_DIR, 0755, true);
+}
+
+// Charger catégories, tailles et couleurs
 $categories = [];
 $sizes = [];
+$colors = [];
 try {
     $categories = $pdo->query("SELECT id, name FROM categories WHERE status = 'active' ORDER BY name ASC")->fetchAll();
 } catch (Exception $e) {
     // Catégories optionnelles
 }
 try {
-    $sizes = $pdo->query("SELECT id, name FROM sizes ORDER BY sort_order ASC, name ASC")->fetchAll();
+    $sizes = $pdo->query("SELECT id, name, category FROM sizes ORDER BY sort_order ASC, name ASC")->fetchAll();
 } catch (Exception $e) {
     // Tailles optionnelles
+}
+try {
+    $colors = $pdo->query("SELECT id, name, hex_code FROM colors ORDER BY name ASC")->fetchAll();
+} catch (Exception $e) {
+    // Couleurs optionnelles
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,12 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Token CSRF invalide.';
     } else {
-        $name = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $price = $_POST['price'] ?? '';
-        $stock = (int)($_POST['stock'] ?? 0);
-        $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+        $name = Security::sanitizeInput($_POST['name'] ?? '');
+        $description = Security::sanitizeInput($_POST['description'] ?? '');
+        $price = Security::sanitizeInput($_POST['price'] ?? '', 'float');
+        $salePrice = !empty($_POST['sale_price']) ? Security::sanitizeInput($_POST['sale_price'], 'float') : null;
+        $stock = Security::sanitizeInput($_POST['stock'] ?? 0, 'int');
+        $categoryId = !empty($_POST['category_id']) ? Security::sanitizeInput($_POST['category_id'], 'int') : null;
+        $brand = Security::sanitizeInput($_POST['brand'] ?? '');
+        $material = Security::sanitizeInput($_POST['material'] ?? '');
+        $gender = Security::sanitizeInput($_POST['gender'] ?? 'unisexe');
+        $season = Security::sanitizeInput($_POST['season'] ?? 'toute_saison');
         $selectedSizes = isset($_POST['sizes']) && is_array($_POST['sizes']) ? array_map('intval', $_POST['sizes']) : [];
+        $selectedColors = isset($_POST['colors']) && is_array($_POST['colors']) ? array_map('intval', $_POST['colors']) : [];
+        $featured = isset($_POST['featured']) ? 1 : 0;
+        $sku = Security::sanitizeInput($_POST['sku'] ?? '');
         // Stocks par taille
         $sizeStocks = [];
         if (!empty($_POST['size_stock']) && is_array($_POST['size_stock'])) {
@@ -41,81 +66,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Validation
+        // Validation renforcée
         if (empty($name)) {
             $errors[] = 'Le nom du produit est requis.';
+        } elseif (strlen($name) < 2) {
+            $errors[] = 'Le nom du produit doit contenir au moins 2 caractères.';
+        } elseif (strlen($name) > 255) {
+            $errors[] = 'Le nom du produit ne peut pas dépasser 255 caractères.';
         }
 
         if (empty($description)) {
             $errors[] = 'La description est requise.';
+        } elseif (strlen($description) < 10) {
+            $errors[] = 'La description doit contenir au moins 10 caractères.';
         }
 
         if (empty($price) || !is_numeric($price) || $price <= 0) {
             $errors[] = 'Le prix doit être un nombre positif.';
+        } elseif ($price > 999999.99) {
+            $errors[] = 'Le prix ne peut pas dépasser 999,999.99 €.';
+        }
+
+        if ($salePrice !== null && (!is_numeric($salePrice) || $salePrice < 0)) {
+            $errors[] = 'Le prix de vente doit être un nombre positif.';
+        }
+
+        if ($salePrice !== null && $salePrice >= $price) {
+            $errors[] = 'Le prix de vente doit être inférieur au prix normal.';
         }
 
         if ($stock < 0) {
             $errors[] = 'Le stock ne peut pas être négatif.';
         }
 
-        // Gestion des uploads d'images
+        if (!empty($sku)) {
+            // Vérifier l'unicité du SKU
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE sku = ?");
+            $stmt->execute([$sku]);
+            if ($stmt->fetchColumn() > 0) {
+                $errors[] = 'Ce SKU existe déjà.';
+            }
+        }
+
+        if (!in_array($gender, ['homme', 'femme', 'unisexe'])) {
+            $errors[] = 'Genre non valide.';
+        }
+
+        if (!in_array($season, ['printemps', 'été', 'automne', 'hiver', 'toute_saison'])) {
+            $errors[] = 'Saison non valide.';
+        }
+
+        // Gestion avancée des uploads d'images
         $imageUrl = null; // image principale (première)
         $galleryImages = [];
-        $maxImages = 5;
+        $uploadedFiles = [];
 
         // Normaliser les inputs fichiers pour images multiples
         $files = [];
         if (!empty($_FILES['images']) && is_array($_FILES['images']['name'])) {
             $count = count($_FILES['images']['name']);
             for ($i = 0; $i < $count; $i++) {
-                $files[] = [
-                    'name' => $_FILES['images']['name'][$i],
-                    'type' => $_FILES['images']['type'][$i],
-                    'tmp_name' => $_FILES['images']['tmp_name'][$i],
-                    'error' => $_FILES['images']['error'][$i],
-                    'size' => $_FILES['images']['size'][$i]
-                ];
+                if ($_FILES['images']['error'][$i] !== UPLOAD_ERR_NO_FILE) {
+                    $files[] = [
+                        'name' => $_FILES['images']['name'][$i],
+                        'type' => $_FILES['images']['type'][$i],
+                        'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                        'error' => $_FILES['images']['error'][$i],
+                        'size' => $_FILES['images']['size'][$i]
+                    ];
+                }
             }
-        } elseif (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-            // Compat: ancien champ simple
-            $files[] = $_FILES['image'];
         }
 
-        if (count($files) > $maxImages) {
-            $errors[] = 'Trop d\'images sélectionnées. Maximum : ' . $maxImages . '.';
+        // Validation du nombre d'images
+        if (count($files) > $MAX_IMAGES) {
+            $errors[] = "Trop d'images sélectionnées. Maximum : {$MAX_IMAGES}.";
         }
 
-        $uploadDir = '../uploads/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
+        // Traitement des images si pas d'erreurs
         if (empty($errors) && !empty($files)) {
             foreach ($files as $index => $file) {
+                // Vérification des erreurs d'upload
                 if ($file['error'] !== UPLOAD_ERR_OK) {
-                    $errors[] = 'Erreur d\'upload pour une image (code ' . $file['error'] . ').';
-                    continue;
-                }
-                if (!isValidImageUpload($file)) {
-                    $errors[] = 'Fichier non autorisé ou trop volumineux. Formats: JPG, PNG. Max 2MB.';
+                    $errors[] = "Erreur d'upload pour l'image " . ($index + 1) . " (code {$file['error']}).";
                     continue;
                 }
 
-                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-                $fileName = uniqid('', true) . '.' . $ext;
-                $uploadPath = $uploadDir . $fileName;
+                // Validation sécurisée de l'image
+                $validation = Security::validateImageUpload($file);
+                if (!$validation['valid']) {
+                    $errors[] = "Image " . ($index + 1) . " : " . $validation['error'];
+                    continue;
+                }
 
+                // Générer un nom de fichier sécurisé
+                $fileName = Security::generateSecureFileName($file['name']);
+                $uploadPath = $UPLOAD_DIR . $fileName;
+
+                // Déplacer le fichier
                 if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                    // Redimensionner l'image pour optimiser
                     if (function_exists('resizeImage')) {
                         resizeImage($uploadPath, $uploadPath, 1200, 1200);
                     }
+                    
                     $url = 'uploads/' . $fileName;
                     if ($imageUrl === null) {
                         $imageUrl = $url; // première comme principale
                     }
                     $galleryImages[] = $url;
+                    $uploadedFiles[] = $uploadPath; // Pour nettoyage en cas d'erreur
                 } else {
-                    $errors[] = 'Impossible d\'enregistrer une image.';
+                    $errors[] = "Impossible d'enregistrer l'image " . ($index + 1) . ".";
                 }
             }
         }
@@ -123,38 +185,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Si pas d'erreurs, ajouter le produit
         if (empty($errors)) {
             try {
-                // Vérifier si la colonne stock existe
-                $hasStock = false;
-                try {
-                    $pdo->query('SELECT stock FROM products LIMIT 1');
-                    $hasStock = true;
-                } catch (PDOException $e) {
-                    // La colonne stock n'existe pas
-                }
-
                 $pdo->beginTransaction();
 
-                if ($hasStock) {
-                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (:name, :description, :price, :stock, :category_id, :image_url)");
-                    $stmt->bindParam(':stock', $stock, PDO::PARAM_INT);
-                } else {
-                    $stmt = $pdo->prepare("INSERT INTO products (name, description, price, category_id, image_url) VALUES (:name, :description, :price, :category_id, :image_url)");
-                }
-
-                $stmt->bindParam(':name', $name);
-                $stmt->bindParam(':description', $description);
-                $stmt->bindParam(':price', $price);
-                if ($categoryId) {
-                    $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
-                } else {
-                    $stmt->bindValue(':category_id', null, PDO::PARAM_NULL);
-                }
-                $stmt->bindParam(':image_url', $imageUrl);
-                $stmt->execute();
+                // Insérer le produit principal avec tous les champs
+                $stmt = $pdo->prepare("
+                    INSERT INTO products (
+                        name, description, price, sale_price, sku, stock, category_id, 
+                        brand, material, gender, season, image_url, featured, status, created_at
+                    ) VALUES (
+                        :name, :description, :price, :sale_price, :sku, :stock, :category_id,
+                        :brand, :material, :gender, :season, :image_url, :featured, 'active', NOW()
+                    )
+                ");
+                
+                $stmt->execute([
+                    ':name' => $name,
+                    ':description' => $description,
+                    ':price' => $price,
+                    ':sale_price' => $salePrice,
+                    ':sku' => $sku ?: null,
+                    ':stock' => $stock,
+                    ':category_id' => $categoryId,
+                    ':brand' => $brand ?: null,
+                    ':material' => $material ?: null,
+                    ':gender' => $gender,
+                    ':season' => $season,
+                    ':image_url' => $imageUrl,
+                    ':featured' => $featured
+                ]);
 
                 $newProductId = (int)$pdo->lastInsertId();
 
-                // Enregistrer les images supplémentaires dans product_images
+                // Enregistrer toutes les images dans product_images (y compris la principale)
                 if (!empty($galleryImages)) {
                     $imgStmt = $pdo->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (:product_id, :image_url, :sort_order)");
                     foreach ($galleryImages as $idx => $url) {
@@ -166,29 +228,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Enregistrer les tailles sélectionnées
+                // Enregistrer les tailles sélectionnées avec gestion de stock individuel
                 if (!empty($selectedSizes)) {
                     $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (:product_id, :size_id, :stock)");
                     foreach ($selectedSizes as $sizeId) {
+                        $sizeStock = isset($sizeStocks[$sizeId]) ? (int)$sizeStocks[$sizeId] : null;
                         $sizeStmt->execute([
                             ':product_id' => $newProductId,
                             ':size_id' => (int)$sizeId,
-                            ':stock' => isset($sizeStocks[$sizeId]) ? (int)$sizeStocks[$sizeId] : null
+                            ':stock' => $sizeStock
                         ]);
+                    }
+                }
+
+                // Enregistrer les couleurs sélectionnées (si table product_colors existe)
+                if (!empty($selectedColors)) {
+                    try {
+                        $colorStmt = $pdo->prepare("INSERT INTO product_colors (product_id, color_id) VALUES (:product_id, :color_id)");
+                        foreach ($selectedColors as $colorId) {
+                            $colorStmt->execute([
+                                ':product_id' => $newProductId,
+                                ':color_id' => (int)$colorId
+                            ]);
+                        }
+                    } catch (PDOException $e) {
+                        // Table product_colors n'existe pas encore, on ignore
                     }
                 }
 
                 $pdo->commit();
 
-                $_SESSION['message'] = 'Produit ajouté avec succès.';
+                // Logger l'action
+                Security::logAction('product_created', [
+                    'product_id' => $newProductId,
+                    'name' => $name,
+                    'price' => $price,
+                    'images_count' => count($galleryImages)
+                ]);
+
+                $_SESSION['message'] = 'Produit ajouté avec succès ! ' . count($galleryImages) . ' image(s) uploadée(s).';
                 $_SESSION['message_type'] = 'success';
                 header('Location: products.php');
                 exit();
 
             } catch (PDOException $e) {
                 if ($pdo->inTransaction()) { $pdo->rollBack(); }
-                $errors[] = 'Erreur lors de l\'ajout : ' . $e->getMessage();
+                
+                // Nettoyer les fichiers uploadés en cas d'erreur
+                foreach ($uploadedFiles as $file) {
+                    if (file_exists($file)) {
+                        unlink($file);
+                    }
+                }
+                
+                $errors[] = 'Erreur lors de l\'ajout du produit. Veuillez réessayer.';
+                error_log('Error adding product: ' . $e->getMessage());
             }
+        } else {
+            // Nettoyer les fichiers en cas d'erreur de validation
+            foreach ($uploadedFiles as $file) {
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+        }
         }
     }
 }
@@ -241,151 +344,340 @@ include 'layouts/header.php';
                         
                         <div class="row">
                             <div class="col-lg-8">
-                                <div class="form-group">
-                                    <label for="name" class="form-label">
-                                        <i class="fas fa-tag me-1"></i>Nom du produit *
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="name" 
-                                           name="name" 
-                                           value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" 
-                                           required
-                                           placeholder="Ex: iPhone 15 Pro">
-                                    <div class="invalid-feedback">
-                                        Veuillez saisir un nom de produit.
+                                <!-- Informations de base -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>Informations de base
+                                        </h6>
                                     </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="description" class="form-label">
-                                        <i class="fas fa-align-left me-1"></i>Description *
-                                    </label>
-                                    <textarea class="form-control" 
-                                              id="description" 
-                                              name="description" 
-                                              rows="5" 
-                                              required
-                                              placeholder="Décrivez votre produit en détail..."><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
-                                    <div class="invalid-feedback">
-                                        Veuillez saisir une description.
-                                    </div>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Une description détaillée améliore les ventes
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="card-body">
                                         <div class="form-group">
-                                            <label for="price" class="form-label">
-                                                <i class="fas fa-euro-sign me-1"></i>Prix (€) *
+                                            <label for="name" class="form-label">
+                                                <i class="fas fa-tag me-1"></i>Nom du produit *
                                             </label>
-                                            <input type="number" 
+                                            <input type="text" 
                                                    class="form-control" 
-                                                   id="price" 
-                                                   name="price" 
-                                                   step="0.01" 
-                                                   min="0" 
-                                                   value="<?php echo htmlspecialchars($_POST['price'] ?? ''); ?>" 
+                                                   id="name" 
+                                                   name="name" 
+                                                   value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" 
                                                    required
-                                                   placeholder="0.00">
+                                                   maxlength="255"
+                                                   placeholder="Ex: Robe midi élégante">
                                             <div class="invalid-feedback">
-                                                Veuillez saisir un prix valide.
+                                                Veuillez saisir un nom de produit (2-255 caractères).
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
+
                                         <div class="form-group">
-                                            <label for="stock" class="form-label">
-                                                <i class="fas fa-boxes me-1"></i>Stock initial
+                                            <label for="description" class="form-label">
+                                                <i class="fas fa-align-left me-1"></i>Description *
                                             </label>
-                                            <input type="number" 
-                                                   class="form-control" 
-                                                   id="stock" 
-                                                   name="stock" 
-                                                   min="0" 
-                                                   value="<?php echo htmlspecialchars($_POST['stock'] ?? '0'); ?>"
-                                                   placeholder="0">
+                                            <textarea class="form-control" 
+                                                      id="description" 
+                                                      name="description" 
+                                                      rows="5" 
+                                                      required
+                                                      placeholder="Décrivez votre produit en détail..."><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+                                            <div class="invalid-feedback">
+                                                Veuillez saisir une description (minimum 10 caractères).
+                                            </div>
                                             <div class="form-text">
                                                 <i class="fas fa-info-circle me-1"></i>
-                                                Quantité disponible en stock
+                                                Une description détaillée améliore les ventes
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="sku" class="form-label">
+                                                        <i class="fas fa-barcode me-1"></i>SKU (Code produit)
+                                                    </label>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="sku" 
+                                                           name="sku" 
+                                                           value="<?php echo htmlspecialchars($_POST['sku'] ?? ''); ?>"
+                                                           placeholder="Ex: ROBE001">
+                                                    <div class="form-text">
+                                                        Code unique pour identifier le produit
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="brand" class="form-label">
+                                                        <i class="fas fa-certificate me-1"></i>Marque
+                                                    </label>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="brand" 
+                                                           name="brand" 
+                                                           value="<?php echo htmlspecialchars($_POST['brand'] ?? ''); ?>"
+                                                           placeholder="Ex: StyleHub">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="category_id" class="form-label">
-                                                <i class="fas fa-layer-group me-1"></i>Catégorie
-                                            </label>
-                                            <select class="form-select" id="category_id" name="category_id">
-                                                <option value="">-- Aucune --</option>
-                                                <?php foreach ($categories as $cat): ?>
-                                                    <option value="<?php echo (int)$cat['id']; ?>" <?php echo ((int)($categoryId ?? 0) === (int)$cat['id']) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($cat['name']); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                <!-- Prix et stock -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-euro-sign me-2"></i>Prix et Stock
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="price" class="form-label">
+                                                        <i class="fas fa-euro-sign me-1"></i>Prix normal (€) *
+                                                    </label>
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           id="price" 
+                                                           name="price" 
+                                                           step="0.01" 
+                                                           min="0" 
+                                                           max="999999.99"
+                                                           value="<?php echo htmlspecialchars($_POST['price'] ?? ''); ?>" 
+                                                           required
+                                                           placeholder="0.00">
+                                                    <div class="invalid-feedback">
+                                                        Veuillez saisir un prix valide (max 999,999.99 €).
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="sale_price" class="form-label">
+                                                        <i class="fas fa-percentage me-1"></i>Prix promotionnel (€)
+                                                    </label>
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           id="sale_price" 
+                                                           name="sale_price" 
+                                                           step="0.01" 
+                                                           min="0"
+                                                           value="<?php echo htmlspecialchars($_POST['sale_price'] ?? ''); ?>"
+                                                           placeholder="0.00">
+                                                    <div class="form-text">
+                                                        Prix de vente (doit être < prix normal)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="stock" class="form-label">
+                                                        <i class="fas fa-boxes me-1"></i>Stock global
+                                                    </label>
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           id="stock" 
+                                                           name="stock" 
+                                                           min="0" 
+                                                           value="<?php echo htmlspecialchars($_POST['stock'] ?? '0'); ?>"
+                                                           placeholder="0">
+                                                    <div class="form-text">
+                                                        Quantité totale disponible
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-label">
-                                                <i class="fas fa-ruler-combined me-1"></i>Tailles disponibles
-                                            </label>
-                                            <div class="d-flex flex-column gap-2">
-                                                <?php foreach ($sizes as $size): ?>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" id="size_<?php echo $size['id']; ?>" name="sizes[]" value="<?php echo (int)$size['id']; ?>" <?php echo in_array((int)$size['id'], $selectedSizes ?? []) ? 'checked' : ''; ?>>
-                                                            <label class="form-check-label" for="size_<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['name']); ?></label>
-                                                        </div>
-                                                        <input type="number" class="form-control form-control-sm" name="size_stock[<?php echo (int)$size['id']; ?>]" min="0" placeholder="Stock" style="width: 120px;">
-                                                    </div>
-                                                <?php endforeach; ?>
+                                </div>
+
+                                <!-- Catégorisation et attributs -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-layer-group me-2"></i>Catégorisation
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="category_id" class="form-label">
+                                                        <i class="fas fa-layer-group me-1"></i>Catégorie
+                                                    </label>
+                                                    <select class="form-select" id="category_id" name="category_id">
+                                                        <option value="">-- Sélectionner une catégorie --</option>
+                                                        <?php foreach ($categories as $cat): ?>
+                                                            <option value="<?php echo (int)$cat['id']; ?>" <?php echo ((int)($_POST['category_id'] ?? 0) === (int)$cat['id']) ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($cat['name']); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div class="form-text">Définissez un stock par taille (optionnel)</div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="gender" class="form-label">
+                                                        <i class="fas fa-venus-mars me-1"></i>Genre
+                                                    </label>
+                                                    <select class="form-select" id="gender" name="gender">
+                                                        <option value="unisexe" <?php echo ($_POST['gender'] ?? 'unisexe') === 'unisexe' ? 'selected' : ''; ?>>Unisexe</option>
+                                                        <option value="homme" <?php echo ($_POST['gender'] ?? '') === 'homme' ? 'selected' : ''; ?>>Homme</option>
+                                                        <option value="femme" <?php echo ($_POST['gender'] ?? '') === 'femme' ? 'selected' : ''; ?>>Femme</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="season" class="form-label">
+                                                        <i class="fas fa-calendar-alt me-1"></i>Saison
+                                                    </label>
+                                                    <select class="form-select" id="season" name="season">
+                                                        <option value="toute_saison" <?php echo ($_POST['season'] ?? 'toute_saison') === 'toute_saison' ? 'selected' : ''; ?>>Toute saison</option>
+                                                        <option value="printemps" <?php echo ($_POST['season'] ?? '') === 'printemps' ? 'selected' : ''; ?>>Printemps</option>
+                                                        <option value="été" <?php echo ($_POST['season'] ?? '') === 'été' ? 'selected' : ''; ?>>Été</option>
+                                                        <option value="automne" <?php echo ($_POST['season'] ?? '') === 'automne' ? 'selected' : ''; ?>>Automne</option>
+                                                        <option value="hiver" <?php echo ($_POST['season'] ?? '') === 'hiver' ? 'selected' : ''; ?>>Hiver</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="material" class="form-label">
+                                                        <i class="fas fa-tshirt me-1"></i>Matière
+                                                    </label>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="material" 
+                                                           name="material" 
+                                                           value="<?php echo htmlspecialchars($_POST['material'] ?? ''); ?>"
+                                                           placeholder="Ex: Coton, Polyester, Soie...">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-check mt-3">
+                                            <input class="form-check-input" type="checkbox" id="featured" name="featured" <?php echo isset($_POST['featured']) ? 'checked' : ''; ?>>
+                                            <label class="form-check-label" for="featured">
+                                                <i class="fas fa-star text-warning me-1"></i>
+                                                Produit mis en avant
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tailles disponibles -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-ruler-combined me-2"></i>Tailles et stock par taille
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <?php 
+                                            $sizesByCategory = [];
+                                            foreach ($sizes as $size) {
+                                                $sizesByCategory[$size['category']][] = $size;
+                                            }
+                                            ?>
+                                            <?php foreach ($sizesByCategory as $category => $categorySizes): ?>
+                                                <div class="col-md-6 mb-3">
+                                                    <h6 class="text-muted text-uppercase mb-2"><?php echo ucfirst($category); ?></h6>
+                                                    <?php foreach ($categorySizes as $size): ?>
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" 
+                                                                       type="checkbox" 
+                                                                       id="size_<?php echo $size['id']; ?>" 
+                                                                       name="sizes[]" 
+                                                                       value="<?php echo (int)$size['id']; ?>" 
+                                                                       <?php echo in_array((int)$size['id'], $selectedSizes ?? []) ? 'checked' : ''; ?>>
+                                                                <label class="form-check-label fw-medium" for="size_<?php echo $size['id']; ?>">
+                                                                    <?php echo htmlspecialchars($size['name']); ?>
+                                                                </label>
+                                                            </div>
+                                                            <input type="number" 
+                                                                   class="form-control form-control-sm" 
+                                                                   name="size_stock[<?php echo (int)$size['id']; ?>]" 
+                                                                   min="0" 
+                                                                   placeholder="Stock"
+                                                                   value="<?php echo htmlspecialchars($_POST['size_stock'][$size['id']] ?? ''); ?>"
+                                                                   style="width: 80px;">
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Sélectionnez les tailles disponibles et définissez un stock spécifique (optionnel)
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-lg-4">
-                                <div class="form-group">
-                                    <label for="images" class="form-label">
-                                        <i class="fas fa-images me-1"></i>Photos du produit
-                                    </label>
-                                    <input type="file" 
-                                           class="form-control" 
-                                           id="images" 
-                                           name="images[]" 
-                                           accept="image/jpeg,image/png,image/jpg"
-                                           multiple>
-                                    <div class="form-text">
-                                        Formats acceptés : JPG, PNG, JPEG. Max 5 images, 2MB chacune
+                                <!-- Upload d'images -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-images me-2"></i>Photos du produit
+                                        </h6>
                                     </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="upload-zone" id="uploadZone">
+                                                <div class="upload-zone-content text-center p-4">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                                    <h6>Glissez-déposez vos images ici</h6>
+                                                    <p class="text-muted small mb-3">ou cliquez pour sélectionner</p>
+                                                    <input type="file" 
+                                                           class="form-control d-none" 
+                                                           id="images" 
+                                                           name="images[]" 
+                                                           accept="image/jpeg,image/png,image/jpg,image/webp"
+                                                           multiple>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('images').click()">
+                                                        <i class="fas fa-folder-open me-1"></i>Choisir les fichiers
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="form-text mt-2">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Formats : JPG, PNG, WEBP • Max <?php echo $MAX_IMAGES; ?> images • 2MB max par image
+                                            </div>
+                                        </div>
 
-                                    <!-- Aperçus -->
-                                    <div id="imagesPreview" class="mt-3 d-flex flex-wrap gap-2"></div>
+                                        <!-- Aperçus des images -->
+                                        <div id="imagesPreview" class="mt-3"></div>
+                                        
+                                        <!-- Compteur d'images -->
+                                        <div id="imageCounter" class="text-center mt-2 small text-muted" style="display: none;">
+                                            <span id="currentCount">0</span> / <?php echo $MAX_IMAGES; ?> images
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- Conseils -->
-                                <div class="card bg-light mt-4">
+                                <!-- Conseils et informations -->
+                                <div class="card bg-light">
                                     <div class="card-body">
                                         <h6 class="card-title">
                                             <i class="fas fa-lightbulb text-warning me-1"></i>
-                                            Conseils
+                                            Conseils pour les photos
                                         </h6>
-                                        <ul class="small mb-0">
+                                        <ul class="small mb-3">
                                             <li>Utilisez des images de haute qualité</li>
-                                            <li>Privilégiez un fond neutre</li>
+                                            <li>Privilégiez un fond neutre et uniforme</li>
                                             <li>Montrez le produit sous plusieurs angles</li>
-                                            <li>Optimisez la taille pour le web</li>
+                                            <li>La première image sera l'image principale</li>
+                                            <li>Évitez les images floues ou sombres</li>
                                         </ul>
+                                        
+                                        <div class="alert alert-info alert-sm mb-0">
+                                            <i class="fas fa-magic me-1"></i>
+                                            <small>Les images seront automatiquement redimensionnées et optimisées</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -393,18 +685,26 @@ include 'layouts/header.php';
 
                         <hr>
 
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-muted">
-                                <i class="fas fa-save me-1"></i>
-                                <small>Brouillon sauvegardé automatiquement</small>
-                            </div>
-                            <div class="btn-group">
-                                <a href="products.php" class="btn btn-secondary">
-                                    <i class="fas fa-times me-2"></i>Annuler
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-plus me-2"></i>Ajouter le produit
-                                </button>
+                        <!-- Actions -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <small>Toutes les données sont sécurisées et validées</small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="products.php" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left me-2"></i>Retour
+                                        </a>
+                                        <button type="reset" class="btn btn-outline-warning">
+                                            <i class="fas fa-undo me-2"></i>Réinitialiser
+                                        </button>
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-plus me-2"></i>Créer le produit
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -413,5 +713,220 @@ include 'layouts/header.php';
         </div>
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('images');
+    const previewContainer = document.getElementById('imagesPreview');
+    const imageCounter = document.getElementById('imageCounter');
+    const currentCount = document.getElementById('currentCount');
+    const maxImages = <?php echo $MAX_IMAGES; ?>;
+    let selectedFiles = [];
+
+    // Style pour la zone de drop
+    const uploadZoneStyle = `
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    `;
+    uploadZone.style.cssText = uploadZoneStyle;
+
+    // Drag & Drop handlers
+    uploadZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#0d6efd';
+        uploadZone.style.backgroundColor = '#f8f9ff';
+    });
+
+    uploadZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#dee2e6';
+        uploadZone.style.backgroundColor = 'transparent';
+    });
+
+    uploadZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#dee2e6';
+        uploadZone.style.backgroundColor = 'transparent';
+        
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    });
+
+    // Click handler pour la zone de drop
+    uploadZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // File input change handler
+    fileInput.addEventListener('change', function() {
+        const files = Array.from(this.files);
+        handleFiles(files);
+    });
+
+    function handleFiles(files) {
+        // Filtrer les fichiers image
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+            showAlert('Veuillez sélectionner uniquement des fichiers image.', 'warning');
+            return;
+        }
+
+        // Vérifier le nombre total d'images
+        if (selectedFiles.length + imageFiles.length > maxImages) {
+            showAlert(`Vous ne pouvez sélectionner que ${maxImages} images maximum.`, 'warning');
+            return;
+        }
+
+        // Ajouter les nouveaux fichiers
+        imageFiles.forEach(file => {
+            if (file.size > 2 * 1024 * 1024) { // 2MB
+                showAlert(`L'image "${file.name}" est trop volumineuse (max 2MB).`, 'warning');
+                return;
+            }
+            
+            selectedFiles.push(file);
+            createPreview(file, selectedFiles.length - 1);
+        });
+
+        updateCounter();
+        updateFileInput();
+    }
+
+    function createPreview(file, index) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'position-relative d-inline-block me-2 mb-2';
+            previewDiv.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="img-thumbnail" 
+                     style="width: 100px; height: 100px; object-fit: cover;">
+                <button type="button" 
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0" 
+                        style="transform: translate(50%, -50%); padding: 2px 6px;"
+                        onclick="removeImage(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="text-center mt-1">
+                    <small class="text-muted">${file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name}</small>
+                </div>
+            `;
+            previewContainer.appendChild(previewDiv);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removeImage = function(index) {
+        selectedFiles.splice(index, 1);
+        updatePreview();
+        updateCounter();
+        updateFileInput();
+    };
+
+    function updatePreview() {
+        previewContainer.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            createPreview(file, index);
+        });
+    }
+
+    function updateCounter() {
+        currentCount.textContent = selectedFiles.length;
+        imageCounter.style.display = selectedFiles.length > 0 ? 'block' : 'none';
+        
+        if (selectedFiles.length >= maxImages) {
+            uploadZone.style.opacity = '0.5';
+            uploadZone.style.pointerEvents = 'none';
+        } else {
+            uploadZone.style.opacity = '1';
+            uploadZone.style.pointerEvents = 'auto';
+        }
+    }
+
+    function updateFileInput() {
+        // Créer un nouveau DataTransfer pour mettre à jour l'input
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.page-content');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Validation du formulaire
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const price = parseFloat(document.getElementById('price').value);
+        const salePrice = document.getElementById('sale_price').value;
+        
+        let errors = [];
+        
+        if (name.length < 2) {
+            errors.push('Le nom du produit doit contenir au moins 2 caractères.');
+        }
+        
+        if (description.length < 10) {
+            errors.push('La description doit contenir au moins 10 caractères.');
+        }
+        
+        if (isNaN(price) || price <= 0) {
+            errors.push('Le prix doit être un nombre positif.');
+        }
+        
+        if (salePrice && (isNaN(parseFloat(salePrice)) || parseFloat(salePrice) >= price)) {
+            errors.push('Le prix promotionnel doit être inférieur au prix normal.');
+        }
+        
+        if (errors.length > 0) {
+            e.preventDefault();
+            showAlert('Erreurs détectées :<br>• ' + errors.join('<br>• '), 'danger');
+            return false;
+        }
+        
+        // Désactiver le bouton de soumission pour éviter les doublons
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Création en cours...';
+    });
+
+    // Calcul automatique du pourcentage de réduction
+    const priceInput = document.getElementById('price');
+    const salePriceInput = document.getElementById('sale_price');
+    
+    function calculateDiscount() {
+        const price = parseFloat(priceInput.value);
+        const salePrice = parseFloat(salePriceInput.value);
+        
+        if (price && salePrice && salePrice < price) {
+            const discount = Math.round(((price - salePrice) / price) * 100);
+            salePriceInput.title = `Réduction de ${discount}%`;
+        } else {
+            salePriceInput.title = '';
+        }
+    }
+    
+    priceInput.addEventListener('input', calculateDiscount);
+    salePriceInput.addEventListener('input', calculateDiscount);
+});
+</script>
 
 <?php include 'layouts/footer.php'; ?>

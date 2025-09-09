@@ -1,5 +1,93 @@
 // JavaScript pour StyleHub - Boutique de Mode
 
+// Fonction pour ajouter/retirer des favoris
+function addToWishlist(productId) {
+    // Créer le formulaire pour l'envoi
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'wishlist.php';
+    form.style.display = 'none';
+    
+    // Token CSRF
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = getCSRFToken();
+    form.appendChild(csrfInput);
+    
+    // Action
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'add';
+    form.appendChild(actionInput);
+    
+    // ID du produit
+    const productInput = document.createElement('input');
+    productInput.type = 'hidden';
+    productInput.name = 'product_id';
+    productInput.value = productId;
+    form.appendChild(productInput);
+    
+    // Ajouter au DOM et soumettre
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function removeFromWishlist(productId) {
+    if (!confirm('Retirer ce produit de vos favoris ?')) {
+        return;
+    }
+    
+    // Créer le formulaire pour l'envoi
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'wishlist.php';
+    form.style.display = 'none';
+    
+    // Token CSRF
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = getCSRFToken();
+    form.appendChild(csrfInput);
+    
+    // Action
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'remove';
+    form.appendChild(actionInput);
+    
+    // ID du produit
+    const productInput = document.createElement('input');
+    productInput.type = 'hidden';
+    productInput.name = 'product_id';
+    productInput.value = productId;
+    form.appendChild(productInput);
+    
+    // Ajouter au DOM et soumettre
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Fonction pour obtenir le token CSRF
+function getCSRFToken() {
+    // Essayer de récupérer depuis un meta tag ou un champ caché existant
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    const hiddenToken = document.querySelector('input[name="csrf_token"]');
+    if (hiddenToken) {
+        return hiddenToken.value;
+    }
+    
+    // Générer un token temporaire (pas idéal mais fonctionnel)
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
 // Fonction pour ajouter un produit au panier
 function addToCart(productId, productName, productPrice, quantity = 1) {
     // Créer un formulaire pour envoyer les données
