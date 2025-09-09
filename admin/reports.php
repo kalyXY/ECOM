@@ -220,11 +220,13 @@ include 'layouts/header.php';
                                             <td><?php echo number_format($month['customers']); ?></td>
                                             <td>
                                                 <?php 
-                                                if ($index > 0) {
+                                                if ($index > 0 && $monthlySales[$index-1]['sales'] > 0) {
                                                     $growth = (($month['sales'] - $monthlySales[$index-1]['sales']) / $monthlySales[$index-1]['sales']) * 100;
                                                     $growthClass = $growth >= 0 ? 'text-success' : 'text-danger';
                                                     $growthIcon = $growth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
                                                     echo '<span class="' . $growthClass . '"><i class="fas ' . $growthIcon . ' me-1"></i>' . number_format(abs($growth), 1) . '%</span>';
+                                                } elseif ($index > 0 && $monthlySales[$index-1]['sales'] == 0 && $month['sales'] > 0) {
+                                                    echo '<span class="text-success"><i class="fas fa-arrow-up me-1"></i>Nouveau</span>';
                                                 } else {
                                                     echo '<span class="text-muted">-</span>';
                                                 }

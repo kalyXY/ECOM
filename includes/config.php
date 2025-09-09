@@ -13,8 +13,13 @@ if (!isset($_SESSION['cart'])) {
 }
 
 // Fonctions utilitaires pour le front-office
-function formatPrice($price) {
-    return number_format((float)$price, 2, ',', ' ') . ' €';
+if (!function_exists('formatPrice')) {
+    function formatPrice($price) {
+        if (class_exists('App') && method_exists('App', 'formatPrice')) {
+            return App::formatPrice($price);
+        }
+        return number_format((float)$price, 2, ',', ' ') . ' €';
+    }
 }
 
 function addToCart($productId, $quantity = 1) {

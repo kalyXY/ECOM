@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/config.php';
 $siteSettings = getSiteSettings();
 $cartCount = getCartItemCount();
 ?>
