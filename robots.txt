@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Interdire l'accès aux fichiers sensibles
+Disallow: /admin/
+Disallow: /config/
+Disallow: /cache/
+Disallow: /api/
+Disallow: *.php$
+
+# Autoriser les ressources importantes
+Allow: /assets/
+Allow: /uploads/
+Allow: /sitemap.php
+
+# Sitemap
+Sitemap: http://localhost/sitemap.php
+
+# Délai entre les requêtes (en secondes)
+Crawl-delay: 1

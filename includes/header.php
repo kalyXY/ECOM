@@ -32,11 +32,72 @@ $cartCount = getCartItemCount();
     <!-- Preload important resources -->
     <link rel="preload" href="assets/js/modern-ecommerce.js" as="script">
     
-    <!-- Meta tags pour SEO mode -->
+    <!-- Meta tags SEO avancés -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="<?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name']); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($siteSettings['site_description']); ?>">
+    <meta property="og:url" content="<?php echo App::currentUrl(); ?>">
+    <meta property="og:site_name" content="<?php echo htmlspecialchars($siteSettings['site_name']); ?>">
+    <meta property="og:locale" content="fr_FR">
+    
+    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@stylehub">
+    <meta name="twitter:title" content="<?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name']); ?>">
+    <meta name="twitter:description" content="<?php echo htmlspecialchars($siteSettings['site_description']); ?>">
+    
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    <?php
+    $schemaData = [
+        "@context" => "https://schema.org",
+        "@type" => "WebSite",
+        "name" => $siteSettings['site_name'],
+        "description" => $siteSettings['site_description'],
+        "url" => App::url(),
+        "potentialAction" => [
+            "@type" => "SearchAction",
+            "target" => App::url("products.php?search={search_term_string}"),
+            "query-input" => "required name=search_term_string"
+        ]
+    ];
+    
+    // Ajouter des données spécifiques selon la page
+    if (isset($product) && $product) {
+        $schemaData = [
+            "@context" => "https://schema.org",
+            "@type" => "Product",
+            "name" => $product['name'],
+            "description" => $product['description'],
+            "image" => App::url($product['image_url']),
+            "brand" => [
+                "@type" => "Brand",
+                "name" => $product['brand'] ?: $siteSettings['site_name']
+            ],
+            "offers" => [
+                "@type" => "Offer",
+                "price" => $product['sale_price'] ?: $product['price'],
+                "priceCurrency" => "EUR",
+                "availability" => $product['stock'] > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "seller" => [
+                    "@type" => "Organization",
+                    "name" => $siteSettings['site_name']
+                ]
+            ]
+        ];
+    }
+    
+    echo json_encode($schemaData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    ?>
+    </script>
+    
+    <!-- Liens canoniques et alternates -->
+    <link rel="canonical" href="<?php echo App::currentUrl(); ?>">
+    
+    <!-- DNS prefetch pour les performances -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
 </head>
 <body>
     <!-- Navigation moderne style Alibaba -->

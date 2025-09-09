@@ -183,40 +183,81 @@ class StyleHubApp {
         searchInput.parentElement.appendChild(suggestionsContainer);
     }
 
-    // Recherche instantanée
+    // Recherche instantanée optimisée
     async handleInstantSearch(query) {
-        if (query.length < 2) return;
+        if (query.length < 2) {
+            this.hideSearchSuggestions();
+            return;
+        }
+
+        // Afficher un loader
+        this.showSearchLoader();
 
         try {
-            const response = await fetch(`search_suggestions.php?q=${encodeURIComponent(query)}`);
-            const suggestions = await response.json();
-            this.displaySearchSuggestions(suggestions);
+            const response = await fetch(`api/search.php?q=${encodeURIComponent(query)}&limit=8`);
+            const data = await response.json();
+            this.displaySearchSuggestions(data.suggestions);
         } catch (error) {
             console.error('Erreur recherche:', error);
+            this.hideSearchSuggestions();
         }
     }
 
-    // Affichage des suggestions
+    // Affichage des suggestions amélioré
     displaySearchSuggestions(suggestions) {
         const container = document.querySelector('.search-suggestions');
         if (!container) return;
 
         if (suggestions.length === 0) {
-            container.style.display = 'none';
+            container.innerHTML = `
+                <div class="suggestion-empty">
+                    <i class="fas fa-search text-muted"></i>
+                    <span>Aucun résultat trouvé</span>
+                </div>
+            `;
+            container.style.display = 'block';
             return;
         }
 
         container.innerHTML = suggestions.map(item => `
             <div class="suggestion-item" onclick="location.href='product.php?id=${item.id}'">
-                <img src="${item.image}" alt="${item.name}" width="40" height="40">
-                <div>
+                <img src="${item.image}" alt="${item.name}" class="suggestion-image" loading="lazy">
+                <div class="suggestion-content">
                     <div class="suggestion-name">${item.name}</div>
-                    <div class="suggestion-price">${item.price}</div>
+                    <div class="suggestion-meta">
+                        ${item.brand ? `<span class="suggestion-brand">${item.brand}</span>` : ''}
+                        <span class="suggestion-price">${item.price}</span>
+                    </div>
                 </div>
+                <i class="fas fa-arrow-right suggestion-arrow"></i>
             </div>
         `).join('');
 
         container.style.display = 'block';
+    }
+
+    // Afficher le loader de recherche
+    showSearchLoader() {
+        const container = document.querySelector('.search-suggestions');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="suggestion-loader">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Recherche...</span>
+                </div>
+                <span class="ms-2">Recherche en cours...</span>
+            </div>
+        `;
+        container.style.display = 'block';
+    }
+
+    // Masquer les suggestions
+    hideSearchSuggestions() {
+        const container = document.querySelector('.search-suggestions');
+        if (container) {
+            container.style.display = 'none';
+        }
     }
 
     // Quick View modal

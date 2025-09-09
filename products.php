@@ -1,387 +1,555 @@
 <?php
-require_once 'includes/config.php';
+require_once 'config/bootstrap.php';
+require_once 'models/Product.php';
+
+// Initialiser le modèle Product
+$productModel = new Product($pdo);
 
 // Gestion de la recherche et des filtres
-$search = $_GET['search'] ?? '';
-$category = $_GET['category'] ?? '';
-$sortBy = $_GET['sort'] ?? 'newest';
+$filters = [];
 $page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 12;
-$offset = ($page - 1) * $perPage;
+$perPage = Config::get('items_per_page', 12);
 
-// Construction de la requête avec filtres
-$whereConditions = ["status = 'active'"];
-$params = [];
-
-if (!empty($search)) {
-    $whereConditions[] = "(name LIKE :search OR description LIKE :search)";
-    $params[':search'] = '%' . $search . '%';
+// Appliquer les filtres de manière sécurisée
+if (!empty($_GET['search'])) {
+    $filters['search'] = Security::sanitizeInput($_GET['search']);
 }
 
-if (!empty($category)) {
-    $whereConditions[] = "category_id = :category";
-    $params[':category'] = $category;
+if (!empty($_GET['category'])) {
+    $filters['category_id'] = Security::sanitizeInput($_GET['category'], 'int');
 }
 
-$whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
-
-// Gestion du tri
-$orderBy = 'ORDER BY ';
-switch ($sortBy) {
-    case 'price_asc':
-        $orderBy .= 'price ASC';
-        break;
-    case 'price_desc':
-        $orderBy .= 'price DESC';
-        break;
-    case 'name':
-        $orderBy .= 'name ASC';
-        break;
-    case 'oldest':
-        $orderBy .= 'created_at ASC';
-        break;
-    default:
-        $orderBy .= 'created_at DESC';
+if (!empty($_GET['gender'])) {
+    $filters['gender'] = Security::sanitizeInput($_GET['gender']);
 }
 
-// Récupérer les produits avec pagination
-try {
-    // Compter le total
-    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM products $whereClause");
-    $countStmt->execute($params);
-    $totalProducts = (int)$countStmt->fetchColumn();
-    $totalPages = ceil($totalProducts / $perPage);
-    
-    // Récupérer les produits
-    $params[':limit'] = $perPage;
-    $params[':offset'] = $offset;
-    
-    $stmt = $pdo->prepare("SELECT * FROM products $whereClause $orderBy LIMIT :limit OFFSET :offset");
-    foreach ($params as $key => $value) {
-        if ($key === ':limit' || $key === ':offset') {
-            $stmt->bindValue($key, $value, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue($key, $value);
-        }
-    }
-    $stmt->execute();
-    $products = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $products = [];
-    $totalProducts = 0;
-    $totalPages = 0;
+if (!empty($_GET['brand'])) {
+    $filters['brand'] = Security::sanitizeInput($_GET['brand']);
 }
 
-// Récupérer les catégories
+if (!empty($_GET['color'])) {
+    $filters['color'] = Security::sanitizeInput($_GET['color']);
+}
+
+if (!empty($_GET['size'])) {
+    $filters['size'] = Security::sanitizeInput($_GET['size']);
+}
+
+if (!empty($_GET['min_price'])) {
+    $filters['min_price'] = Security::sanitizeInput($_GET['min_price'], 'float');
+}
+
+if (!empty($_GET['max_price'])) {
+    $filters['max_price'] = Security::sanitizeInput($_GET['max_price'], 'float');
+}
+
+if (!empty($_GET['sort'])) {
+    $filters['sort'] = Security::sanitizeInput($_GET['sort']);
+}
+
+if (isset($_GET['featured'])) {
+    $filters['featured'] = $_GET['featured'] === '1';
+}
+
+// Obtenir les résultats avec le modèle optimisé
+$result = $productModel->getAll($filters, $page, $perPage);
+$products = $result['products'];
+$totalProducts = $result['total'];
+$totalPages = $result['pages'];
+
+// Obtenir les données pour les filtres
 $categories = [];
 try {
-    $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
-} catch (PDOException $e) {
-    // Table categories n'existe pas
+    $stmt = $pdo->query("SELECT * FROM categories WHERE status = 'active' ORDER BY name");
+    $categories = $stmt->fetchAll();
+} catch (Exception $e) {
+    $categories = [];
 }
 
-$pageTitle = 'Nos Collections Mode';
+// Obtenir les marques disponibles
+$brands = [];
+try {
+    $stmt = $pdo->query("SELECT DISTINCT brand FROM products WHERE status = 'active' AND brand IS NOT NULL AND brand != '' ORDER BY brand");
+    $brands = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    $brands = [];
+}
+
+// Obtenir les couleurs disponibles
+$colors = [];
+try {
+    $stmt = $pdo->query("SELECT DISTINCT color FROM products WHERE status = 'active' AND color IS NOT NULL AND color != '' ORDER BY color");
+    $colors = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    $colors = [];
+}
+
+// Obtenir les tailles disponibles
+$sizes = [];
+try {
+    $stmt = $pdo->query("SELECT DISTINCT size FROM products WHERE status = 'active' AND size IS NOT NULL AND size != '' ORDER BY 
+                        CASE 
+                            WHEN size REGEXP '^[0-9]+$' THEN CAST(size AS UNSIGNED)
+                            ELSE 999 
+                        END, size");
+    $sizes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+    $sizes = [];
+}
+
+// Configuration du titre de la page
+$pageTitle = 'Nos Produits';
+if (!empty($filters['search'])) {
+    $pageTitle = 'Recherche : ' . $filters['search'];
+} elseif (!empty($filters['gender'])) {
+    $pageTitle = 'Mode ' . ucfirst($filters['gender']);
+} elseif (!empty($filters['category_id'])) {
+    $categoryName = '';
+    foreach ($categories as $cat) {
+        if ($cat['id'] == $filters['category_id']) {
+            $categoryName = $cat['name'];
+            break;
+        }
+    }
+    $pageTitle = $categoryName ?: 'Produits';
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> - E-Commerce</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="assets/css/style.css" rel="stylesheet">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="index.php">
-                <i class="fas fa-store me-2"></i>E-Commerce
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">
-                            <i class="fas fa-home me-1"></i>Accueil
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="products.php">
-                            <i class="fas fa-box me-1"></i>Produits
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">
-                            <i class="fas fa-envelope me-1"></i>Contact
-                        </a>
-                    </li>
-                </ul>
+<?php include 'includes/header.php'; ?>
+
+<!-- Filtres et résultats -->
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar des filtres -->
+        <div class="col-lg-3 col-md-4">
+            <div class="filters-sidebar">
+                <div class="filters-header">
+                    <h5><i class="fas fa-filter me-2"></i>Filtres</h5>
+                    <button class="btn btn-link btn-sm" id="clearFilters">Effacer tout</button>
+                </div>
                 
-                <!-- Barre de recherche -->
-                <form class="d-flex me-3" method="GET" action="products.php">
-                    <div class="input-group">
-                        <input class="form-control" type="search" name="search" placeholder="Rechercher..." 
-                               value="<?php echo htmlspecialchars($search); ?>">
-                        <button class="btn btn-outline-light" type="submit">
-                            <i class="fas fa-search"></i>
+                <form id="filtersForm" method="GET">
+                    <!-- Recherche -->
+                    <?php if (!empty($filters['search'])): ?>
+                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($filters['search']); ?>">
+                    <?php endif; ?>
+                    
+                    <!-- Catégories -->
+                    <?php if (!empty($categories)): ?>
+                        <div class="filter-section">
+                            <h6 class="filter-title">Catégories</h6>
+                            <div class="filter-options">
+                                <?php foreach ($categories as $category): ?>
+                                    <label class="filter-option">
+                                        <input type="radio" name="category" value="<?php echo $category['id']; ?>" 
+                                               class="product-filter" <?php echo ($filters['category_id'] ?? '') == $category['id'] ? 'checked' : ''; ?>>
+                                        <span class="checkmark"></span>
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Genre -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">Genre</h6>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="radio" name="gender" value="femme" class="product-filter" 
+                                       <?php echo ($filters['gender'] ?? '') === 'femme' ? 'checked' : ''; ?>>
+                                <span class="checkmark"></span>
+                                Femme
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="gender" value="homme" class="product-filter"
+                                       <?php echo ($filters['gender'] ?? '') === 'homme' ? 'checked' : ''; ?>>
+                                <span class="checkmark"></span>
+                                Homme
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="gender" value="unisexe" class="product-filter"
+                                       <?php echo ($filters['gender'] ?? '') === 'unisexe' ? 'checked' : ''; ?>>
+                                <span class="checkmark"></span>
+                                Unisexe
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Prix -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">Prix</h6>
+                        <div class="price-range">
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="min_price" class="form-control form-control-sm" 
+                                           placeholder="Min" value="<?php echo $filters['min_price'] ?? ''; ?>">
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="max_price" class="form-control form-control-sm" 
+                                           placeholder="Max" value="<?php echo $filters['max_price'] ?? ''; ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Marques -->
+                    <?php if (!empty($brands)): ?>
+                        <div class="filter-section">
+                            <h6 class="filter-title">Marques</h6>
+                            <div class="filter-options scrollable">
+                                <?php foreach ($brands as $brand): ?>
+                                    <label class="filter-option">
+                                        <input type="radio" name="brand" value="<?php echo htmlspecialchars($brand); ?>" 
+                                               class="product-filter" <?php echo ($filters['brand'] ?? '') === $brand ? 'checked' : ''; ?>>
+                                        <span class="checkmark"></span>
+                                        <?php echo htmlspecialchars($brand); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Couleurs -->
+                    <?php if (!empty($colors)): ?>
+                        <div class="filter-section">
+                            <h6 class="filter-title">Couleurs</h6>
+                            <div class="color-options">
+                                <?php foreach ($colors as $color): ?>
+                                    <label class="color-option" title="<?php echo htmlspecialchars($color); ?>">
+                                        <input type="radio" name="color" value="<?php echo htmlspecialchars($color); ?>" 
+                                               class="product-filter" <?php echo ($filters['color'] ?? '') === $color ? 'checked' : ''; ?>>
+                                        <span class="color-swatch" style="background-color: <?php echo strtolower($color); ?>"></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Tailles -->
+                    <?php if (!empty($sizes)): ?>
+                        <div class="filter-section">
+                            <h6 class="filter-title">Tailles</h6>
+                            <div class="size-options">
+                                <?php foreach ($sizes as $size): ?>
+                                    <label class="size-option">
+                                        <input type="radio" name="size" value="<?php echo htmlspecialchars($size); ?>" 
+                                               class="product-filter" <?php echo ($filters['size'] ?? '') === $size ? 'checked' : ''; ?>>
+                                        <span class="size-label"><?php echo htmlspecialchars($size); ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Zone des produits -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Header des résultats -->
+            <div class="results-header">
+                <div class="results-info">
+                    <h4><?php echo htmlspecialchars($pageTitle); ?></h4>
+                    <p class="text-muted"><?php echo number_format($totalProducts); ?> produit(s) trouvé(s)</p>
+                </div>
+                
+                <div class="results-actions">
+                    <div class="view-toggle">
+                        <button class="btn btn-outline-secondary btn-sm active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" data-view="list">
+                            <i class="fas fa-list"></i>
                         </button>
                     </div>
-                </form>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link position-relative" href="cart.php">
-                            <i class="fas fa-shopping-cart me-1"></i>Panier
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="admin/login.php">
-                            <i class="fas fa-user-shield me-1"></i>Admin
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Spacer pour navbar fixe -->
-    <div style="height: 76px;"></div>
-
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="bg-light py-3">
-        <div class="container">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="index.php">Accueil</a></li>
-                <li class="breadcrumb-item active">Produits</li>
-            </ol>
-        </div>
-    </nav>
-
-    <!-- Contenu principal -->
-    <div class="container py-4">
-        <div class="row">
-            <!-- Sidebar avec filtres -->
-            <div class="col-lg-3 mb-4">
-                <div class="search-filters">
-                    <h5 class="mb-3">Filtres</h5>
                     
-                    <form method="GET" action="products.php">
-                        <!-- Conserver la recherche -->
-                        <?php if (!empty($search)): ?>
-                            <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
-                        <?php endif; ?>
-                        
-                        <!-- Filtres par genre -->
-                        <div class="filter-section">
-                            <label class="filter-title">Genre</label>
-                            <select name="gender" class="form-select" onchange="this.form.submit()">
-                                <option value="">Tous</option>
-                                <option value="femme" <?php echo ($_GET['gender'] ?? '') == 'femme' ? 'selected' : ''; ?>>Femme</option>
-                                <option value="homme" <?php echo ($_GET['gender'] ?? '') == 'homme' ? 'selected' : ''; ?>>Homme</option>
-                                <option value="unisexe" <?php echo ($_GET['gender'] ?? '') == 'unisexe' ? 'selected' : ''; ?>>Unisexe</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Catégories -->
-                        <?php if (!empty($categories)): ?>
-                        <div class="filter-section">
-                            <label class="filter-title">Collection</label>
-                            <select name="category" class="form-select" onchange="this.form.submit()">
-                                <option value="">Toutes les collections</option>
-                                <?php foreach ($categories as $cat): ?>
-                                    <option value="<?php echo $cat['id']; ?>" <?php echo $category == $cat['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($cat['name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <!-- Filtre par prix -->
-                        <div class="filter-section">
-                            <label class="filter-title">Prix</label>
-                            <select name="price_range" class="form-select" onchange="this.form.submit()">
-                                <option value="">Tous les prix</option>
-                                <option value="0-50" <?php echo ($_GET['price_range'] ?? '') == '0-50' ? 'selected' : ''; ?>>Moins de 50€</option>
-                                <option value="50-100" <?php echo ($_GET['price_range'] ?? '') == '50-100' ? 'selected' : ''; ?>>50€ - 100€</option>
-                                <option value="100-200" <?php echo ($_GET['price_range'] ?? '') == '100-200' ? 'selected' : ''; ?>>100€ - 200€</option>
-                                <option value="200+" <?php echo ($_GET['price_range'] ?? '') == '200+' ? 'selected' : ''; ?>>Plus de 200€</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Tri -->
-                        <div class="filter-section">
-                            <label class="filter-title">Trier par</label>
-                            <select name="sort" class="form-select" onchange="this.form.submit()">
-                                <option value="newest" <?php echo $sortBy == 'newest' ? 'selected' : ''; ?>>Plus récents</option>
-                                <option value="oldest" <?php echo $sortBy == 'oldest' ? 'selected' : ''; ?>>Plus anciens</option>
-                                <option value="name" <?php echo $sortBy == 'name' ? 'selected' : ''; ?>>Nom A-Z</option>
-                                <option value="price_asc" <?php echo $sortBy == 'price_asc' ? 'selected' : ''; ?>>Prix croissant</option>
-                                <option value="price_desc" <?php echo $sortBy == 'price_desc' ? 'selected' : ''; ?>>Prix décroissant</option>
-                            </select>
-                        </div>
-                    </form>
+                    <select name="sort" class="form-select form-select-sm" id="sortSelect">
+                        <option value="newest" <?php echo ($filters['sort'] ?? 'newest') === 'newest' ? 'selected' : ''; ?>>Plus récents</option>
+                        <option value="price_asc" <?php echo ($filters['sort'] ?? '') === 'price_asc' ? 'selected' : ''; ?>>Prix croissant</option>
+                        <option value="price_desc" <?php echo ($filters['sort'] ?? '') === 'price_desc' ? 'selected' : ''; ?>>Prix décroissant</option>
+                        <option value="name_asc" <?php echo ($filters['sort'] ?? '') === 'name_asc' ? 'selected' : ''; ?>>Nom A-Z</option>
+                        <option value="popularity" <?php echo ($filters['sort'] ?? '') === 'popularity' ? 'selected' : ''; ?>>Popularité</option>
+                    </select>
                 </div>
             </div>
             
-            <!-- Liste des produits -->
-            <div class="col-lg-9">
-                <!-- En-tête des résultats -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="h3 mb-1 fashion-title"><?php echo $pageTitle; ?></h1>
-                        <p class="text-muted mb-0">
-                            <?php echo $totalProducts; ?> article<?php echo $totalProducts > 1 ? 's' : ''; ?> trouvé<?php echo $totalProducts > 1 ? 's' : ''; ?>
-                            <?php if (!empty($search)): ?>
-                                pour "<?php echo htmlspecialchars($search); ?>"
-                            <?php endif; ?>
-                        </p>
-                    </div>
-                </div>
-
-                <?php if (empty($products)): ?>
-                    <!-- Aucun produit trouvé -->
-                    <div class="text-center py-5">
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h4>Aucun article trouvé</h4>
-                        <p class="text-muted">Essayez de modifier vos critères de recherche ou explorez nos collections.</p>
-                        <a href="products.php" class="btn btn-primary">Voir Toutes les Collections</a>
-                    </div>
-                <?php else: ?>
-                    <!-- Grille des produits -->
-                    <div class="row g-4">
+            <!-- Grille des produits -->
+            <div class="products-grid" id="productsGrid">
+                <?php if (!empty($products)): ?>
+                    <div class="row g-3">
                         <?php foreach ($products as $product): ?>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card product-card h-100">
+                            <div class="col-6 col-md-4 col-xl-3">
+                                <div class="product-card" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
+                                    <!-- Badges -->
+                                    <div class="product-badge">
+                                        <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                            <?php $discount = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>
+                                            <span class="badge-sale">-<?php echo $discount; ?>%</span>
+                                        <?php endif; ?>
+                                        <?php if (strtotime($product['created_at']) > strtotime('-7 days')): ?>
+                                            <span class="badge-new">Nouveau</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <!-- Bouton wishlist -->
+                                    <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist(<?php echo $product['id']; ?>)">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                    
                                     <!-- Image du produit -->
-                                    <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
-                                        <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                             class="card-img-top product-image" 
-                                             alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                    <?php else: ?>
-                                        <div class="card-img-top product-image bg-light d-flex align-items-center justify-content-center">
-                                            <i class="fas fa-image fa-3x text-muted"></i>
-                                        </div>
-                                    <?php endif; ?>
+                                    <div class="product-image-container">
+                                        <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
+                                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
+                                                 class="product-image" 
+                                                 alt="<?php echo htmlspecialchars($product['name']); ?>" loading="lazy">
+                                        <?php else: ?>
+                                            <div class="product-image d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-tshirt fa-3x text-muted"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                     
                                     <!-- Informations du produit -->
-                                    <div class="card-body product-info d-flex flex-column">
+                                    <div class="product-info">
                                         <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
-                                        <p class="product-description flex-grow-1">
-                                            <?php echo htmlspecialchars(substr($product['description'], 0, 100)) . '...'; ?>
-                                        </p>
-                                        <div class="mt-auto">
-                                            <div class="product-price mb-3">
-                                                <?php echo formatPrice($product['price']); ?>
+                                        
+                                        <!-- Prix -->
+                                        <div class="product-price-container">
+                                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                                <span class="product-price"><?php echo App::formatPrice($product['sale_price']); ?></span>
+                                                <span class="product-original-price"><?php echo App::formatPrice($product['price']); ?></span>
+                                            <?php else: ?>
+                                                <span class="product-price"><?php echo App::formatPrice($product['price']); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Métadonnées -->
+                                        <div class="product-meta">
+                                            <div class="product-rating">
+                                                <span class="stars">★★★★☆</span>
+                                                <span>(4.2)</span>
                                             </div>
-                                            <div class="d-grid gap-2">
-                                                <a href="product.php?id=<?php echo $product['id']; ?>" class="btn btn-outline-primary">
-                                                    <i class="fas fa-eye me-1"></i>Voir le produit
-                                                </a>
-                                                <button class="btn btn-primary btn-add-to-cart" 
-                                                        onclick="addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['price']; ?>)">
-                                                    <i class="fas fa-shopping-cart me-1"></i>Ajouter au panier
-                                                </button>
-                                            </div>
+                                            <div class="product-sold"><?php echo rand(10, 500); ?> vendus</div>
+                                        </div>
+                                        
+                                        <!-- Tags -->
+                                        <div class="product-tags">
+                                            <?php if ($product['brand']): ?>
+                                                <span class="product-tag"><?php echo htmlspecialchars($product['brand']); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($product['color']): ?>
+                                                <span class="product-tag"><?php echo htmlspecialchars($product['color']); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Livraison -->
+                                        <div class="product-shipping">
+                                            <i class="fas fa-shipping-fast me-1"></i>Livraison gratuite
+                                        </div>
+                                        
+                                        <!-- Boutons d'action -->
+                                        <div class="mt-2">
+                                            <button class="btn-add-to-cart mb-1" 
+                                                    onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)">
+                                                <i class="fas fa-shopping-cart me-1"></i>Ajouter au panier
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
-
-                    <!-- Pagination -->
-                    <?php if ($totalPages > 1): ?>
-                        <nav aria-label="Navigation des pages" class="mt-5">
-                            <ul class="pagination justify-content-center">
-                                <!-- Page précédente -->
-                                <?php if ($page > 1): ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
-                                            <i class="fas fa-chevron-left"></i> Précédent
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                                
-                                <!-- Numéros de pages -->
-                                <?php
-                                $startPage = max(1, $page - 2);
-                                $endPage = min($totalPages, $page + 2);
-                                
-                                for ($i = $startPage; $i <= $endPage; $i++):
-                                ?>
-                                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    </li>
-                                <?php endfor; ?>
-                                
-                                <!-- Page suivante -->
-                                <?php if ($page < $totalPages): ?>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
-                                            Suivant <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                            </ul>
-                        </nav>
-                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="no-products">
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5>Aucun produit trouvé</h5>
+                            <p class="text-muted">Essayez de modifier vos critères de recherche</p>
+                            <button class="btn btn-primary" onclick="clearAllFilters()">
+                                <i class="fas fa-refresh me-2"></i>Voir tous les produits
+                            </button>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
+            
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+                <nav class="pagination-container">
+                    <ul class="pagination justify-content-center">
+                        <?php if ($page > 1): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        
+                        <?php 
+                        $start = max(1, $page - 2);
+                        $end = min($totalPages, $page + 2);
+                        
+                        if ($start > 1): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>">1</a>
+                            </li>
+                            <?php if ($start > 2): ?>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php for ($i = $start; $i <= $end; $i++): ?>
+                            <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        
+                        <?php if ($end < $totalPages): ?>
+                            <?php if ($end < $totalPages - 1): ?>
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <?php endif; ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>"><?php echo $totalPages; ?></a>
+                            </li>
+                        <?php endif; ?>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <li class="page-item">
+                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </div>
     </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-5 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5><i class="fas fa-store me-2"></i>E-Commerce</h5>
-                    <p class="mb-3">Votre boutique en ligne de confiance depuis 2024.</p>
-                </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6>Navigation</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white-50 text-decoration-none">Accueil</a></li>
-                        <li><a href="products.php" class="text-white-50 text-decoration-none">Produits</a></li>
-                        <li><a href="contact.php" class="text-white-50 text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h6>Contact</h6>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-phone me-2"></i>01 23 45 67 89</li>
-                        <li><i class="fas fa-envelope me-2"></i>contact@ecommerce.com</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <div class="text-center">
-                <small class="text-muted">© 2024 E-Commerce. Tous droits réservés.</small>
-            </div>
-        </div>
-    </footer>
+<script>
+// Gestion des filtres en temps réel
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = document.querySelectorAll('.product-filter');
+    const sortSelect = document.getElementById('sortSelect');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const priceInputs = document.querySelectorAll('input[name="min_price"], input[name="max_price"]');
+    
+    // Appliquer les filtres automatiquement
+    filterInputs.forEach(input => {
+        input.addEventListener('change', applyFilters);
+    });
+    
+    // Débounce pour les champs de prix
+    priceInputs.forEach(input => {
+        input.addEventListener('input', debounce(applyFilters, 500));
+    });
+    
+    if (sortSelect) {
+        sortSelect.addEventListener('change', applyFilters);
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    function applyFilters() {
+        const form = document.getElementById('filtersForm');
+        const formData = new FormData(form);
+        
+        // Ajouter le tri
+        if (sortSelect) {
+            formData.set('sort', sortSelect.value);
+        }
+        
+        // Ajouter les prix
+        const minPrice = document.querySelector('input[name="min_price"]').value;
+        const maxPrice = document.querySelector('input[name="max_price"]').value;
+        
+        if (minPrice) formData.set('min_price', minPrice);
+        if (maxPrice) formData.set('max_price', maxPrice);
+        
+        // Construire l'URL
+        const params = new URLSearchParams();
+        for (let [key, value] of formData.entries()) {
+            if (value && value.trim() !== '') {
+                params.append(key, value);
+            }
+        }
+        
+        // Préserver la recherche si elle existe
+        const searchParam = new URLSearchParams(window.location.search).get('search');
+        if (searchParam) {
+            params.set('search', searchParam);
+        }
+        
+        // Rediriger avec les nouveaux filtres
+        const newUrl = 'products.php' + (params.toString() ? '?' + params.toString() : '');
+        window.location.href = newUrl;
+    }
+    
+    function clearAllFilters() {
+        // Préserver uniquement la recherche
+        const searchParam = new URLSearchParams(window.location.search).get('search');
+        const newUrl = searchParam ? `products.php?search=${encodeURIComponent(searchParam)}` : 'products.php';
+        window.location.href = newUrl;
+    }
+    
+    // Gestion de l'affichage grille/liste
+    document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            const grid = document.getElementById('productsGrid');
+            
+            // Mettre à jour les boutons
+            document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Changer la vue
+            if (view === 'list') {
+                grid.classList.add('list-view');
+                localStorage.setItem('products_view', 'list');
+            } else {
+                grid.classList.remove('list-view');
+                localStorage.setItem('products_view', 'grid');
+            }
+        });
+    });
+    
+    // Restaurer la vue préférée
+    const savedView = localStorage.getItem('products_view');
+    if (savedView === 'list') {
+        document.querySelector('[data-view="list"]').click();
+    }
+    
+    // Fonction utilitaire debounce
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+});
 
-    <!-- Bouton retour en haut -->
-    <button id="backToTop" class="btn btn-primary position-fixed bottom-0 end-0 m-3" style="display: none; z-index: 1000;">
-        <i class="fas fa-arrow-up"></i>
-    </button>
+// Fonction globale pour effacer tous les filtres
+function clearAllFilters() {
+    const searchParam = new URLSearchParams(window.location.search).get('search');
+    const newUrl = searchParam ? `products.php?search=${encodeURIComponent(searchParam)}` : 'products.php';
+    window.location.href = newUrl;
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/script.js"></script>
-    <script>
-        // Mettre à jour le compteur du panier au chargement
-        updateCartCount();
-    </script>
-</body>
-</html>
+// Fonction pour appliquer un filtre spécifique (utile pour les liens directs)
+function applyFilter(filterName, filterValue) {
+    const params = new URLSearchParams(window.location.search);
+    params.set(filterName, filterValue);
+    window.location.href = 'products.php?' + params.toString();
+}
+</script>
+
+<?php include 'includes/footer.php'; ?>

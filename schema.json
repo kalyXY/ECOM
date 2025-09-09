@@ -1,0 +1,86 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "StyleHub",
+  "description": "Boutique en ligne spécialisée dans la mode pour hommes, femmes et enfants. Découvrez nos collections tendance et nos prix imbattables.",
+  "url": "http://localhost",
+  "logo": "http://localhost/assets/images/logo.png",
+  "image": "http://localhost/assets/images/store-banner.jpg",
+  "telephone": "01 42 86 95 73",
+  "email": "contact@stylehub.fr",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "25 Avenue des Champs-Élysées",
+    "addressLocality": "Paris",
+    "postalCode": "75008",
+    "addressCountry": "FR"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 48.8698,
+    "longitude": 2.3076
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "opens": "09:00",
+      "closes": "19:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Saturday",
+      "opens": "10:00",
+      "closes": "18:00"
+    }
+  ],
+  "priceRange": "€-€€€",
+  "currenciesAccepted": "EUR",
+  "paymentAccepted": [
+    "Credit Card",
+    "PayPal",
+    "Bank Transfer"
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Catalogue Mode StyleHub",
+    "itemListElement": [
+      {
+        "@type": "OfferCatalog",
+        "name": "Mode Femme",
+        "description": "Collection complète de vêtements féminins"
+      },
+      {
+        "@type": "OfferCatalog",
+        "name": "Mode Homme",
+        "description": "Collection masculine tendance et élégante"
+      },
+      {
+        "@type": "OfferCatalog",
+        "name": "Mode Enfant",
+        "description": "Vêtements pour enfants, confortables et stylés"
+      },
+      {
+        "@type": "OfferCatalog",
+        "name": "Accessoires",
+        "description": "Accessoires de mode pour compléter vos tenues"
+      }
+    ]
+  },
+  "sameAs": [
+    "https://www.facebook.com/stylehub",
+    "https://www.instagram.com/stylehub",
+    "https://www.twitter.com/stylehub"
+  ],
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "http://localhost/products.php?search={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
