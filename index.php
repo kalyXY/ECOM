@@ -34,50 +34,56 @@ $pageTitle = 'Accueil';
 
 <?php include 'includes/header.php'; ?>
 
-<!-- Hero Section moderne -->
+<!-- Hero Section moderne avec carrousel DB (catégories/produits) -->
 <section class="hero-modern">
     <div class="container-fluid p-0">
-        <div class="hero-banner">
-            <div class="hero-content">
-                <div class="container">
-                    <div class="row align-items-center min-vh-50">
-                        <div class="col-lg-6">
-                            <div class="hero-text">
-                                <h1 class="hero-title">Mode & Style pour Toute la Famille</h1>
-                                <p class="hero-subtitle">Découvrez les dernières tendances mode pour hommes, femmes et enfants. Qualité premium, prix imbattables.</p>
-                                <div class="hero-actions">
-                                    <a href="products.php" class="btn btn-primary btn-lg me-3">
-                                        <i class="fas fa-shopping-bag me-2"></i>Découvrir
-                                    </a>
-                                    <a href="products.php?featured=1" class="btn btn-outline-primary btn-lg">
-                                        <i class="fas fa-fire me-2"></i>Tendances
-                                    </a>
-                                </div>
-                                <div class="hero-features">
-                                    <div class="feature-item">
-                                        <i class="fas fa-shipping-fast text-success"></i>
-                                        <span>Livraison gratuite dès 50€</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-undo text-info"></i>
-                                        <span>Retours gratuits 30 jours</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-shield-alt text-warning"></i>
-                                        <span>Paiement 100% sécurisé</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="hero-image">
-                                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800" 
-                                     alt="Mode StyleHub" class="img-fluid rounded-3 shadow-lg">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <?php
+                $slides = [];
+                foreach ($categories as $cat) {
+                    if (!empty($cat['image_url'])) {
+                        $slides[] = [
+                            'image' => $cat['image_url'],
+                            'title' => $cat['name'],
+                            'link' => 'products.php?category=' . urlencode($cat['slug'])
+                        ];
+                    }
+                }
+                foreach ($featuredProducts as $fp) {
+                    if (!empty($fp['image_url'])) {
+                        $slides[] = [
+                            'image' => $fp['image_url'],
+                            'title' => $fp['name'],
+                            'link' => 'product.php?id=' . (int)$fp['id']
+                        ];
+                    }
+                }
+                $slides = array_slice($slides, 0, 5);
+                if (empty($slides)) {
+                    echo '<div class="carousel-item active"><div class="bg-light d-flex align-items-center justify-content-center" style="height:420px;"><i class="fas fa-image fa-4x text-muted"></i></div></div>';
+                } else {
+                    foreach ($slides as $i => $s) {
+                        $active = $i === 0 ? 'active' : '';
+                        echo '<div class="carousel-item ' . $active . '">';
+                        echo '<a href="' . htmlspecialchars($s['link']) . '">';
+                        echo '<img src="' . htmlspecialchars($s['image']) . '" class="d-block w-100" alt="' . htmlspecialchars($s['title']) . '" style="max-height:420px; object-fit:cover;">';
+                        echo '</a>';
+                        echo '</div>';
+                    }
+                }
+                ?>
             </div>
+            <?php if (!empty($slides) && count($slides) > 1): ?>
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Précédent</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Suivant</span>
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -86,30 +92,14 @@ $pageTitle = 'Accueil';
 <section class="quick-categories py-3 bg-light">
     <div class="container">
         <div class="row text-center">
+            <?php foreach (array_slice($categories, 0, 4) as $cat): ?>
             <div class="col-6 col-md-3 mb-2">
-                <a href="products.php?gender=femme" class="category-quick-link">
-                    <i class="fas fa-female fa-2x text-pink mb-2"></i>
-                    <div>Mode Femme</div>
+                <a href="products.php?category=<?php echo urlencode($cat['slug']); ?>" class="category-quick-link">
+                    <i class="fas fa-tags fa-2x text-primary mb-2"></i>
+                    <div><?php echo htmlspecialchars($cat['name']); ?></div>
                 </a>
             </div>
-            <div class="col-6 col-md-3 mb-2">
-                <a href="products.php?gender=homme" class="category-quick-link">
-                    <i class="fas fa-male fa-2x text-primary mb-2"></i>
-                    <div>Mode Homme</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <a href="products.php?category=enfant" class="category-quick-link">
-                    <i class="fas fa-child fa-2x text-success mb-2"></i>
-                    <div>Mode Enfant</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <a href="products.php?category=accessoires" class="category-quick-link">
-                    <i class="fas fa-gem fa-2x text-warning mb-2"></i>
-                    <div>Accessoires</div>
-                </a>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
@@ -210,14 +200,7 @@ $pageTitle = 'Accueil';
                                 <?php endif; ?>
                             </div>
                             
-                            <!-- Métadonnées -->
-                            <div class="product-meta">
-                                <div class="product-rating">
-                                    <span class="stars">★★★★☆</span>
-                                    <span>(4.2)</span>
-                                </div>
-                                <div class="product-sold">125 vendus</div>
-                            </div>
+                            <!-- Métadonnées (afficher seulement si système d'avis est présent) -->
                             
                             <!-- Tags -->
                             <div class="product-tags">
@@ -256,15 +239,93 @@ $pageTitle = 'Accueil';
 </section>
 <?php endif; ?>
 
-<!-- Fashion Quote Section -->
+<!-- Recent Products Section -->
+<?php if (!empty($recentProducts)): ?>
 <section class="py-5">
     <div class="container">
-        <div class="fashion-quote">
-            La mode se démode, le style jamais.
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fashion-title mb-1">Nouveautés</h2>
+                <p class="text-muted mb-0">Derniers produits ajoutés</p>
+            </div>
+            <a href="products.php?sort=created_at_desc" class="btn btn-outline-primary">Voir plus</a>
         </div>
-        <p class="text-center text-muted">- Coco Chanel</p>
+        <div class="row g-3">
+            <?php foreach ($recentProducts as $product): ?>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
+                    <div class="product-image-container">
+                        <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
+                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        <?php else: ?>
+                            <div class="product-image d-flex align-items-center justify-content-center"><i class="fas fa-tshirt fa-3x text-muted"></i></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-info">
+                        <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
+                        <div class="product-price-container">
+                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                <span class="product-price"><?php echo formatPrice($product['sale_price']); ?></span>
+                                <span class="product-original-price"><?php echo formatPrice($product['price']); ?></span>
+                            <?php else: ?>
+                                <span class="product-price"><?php echo formatPrice($product['price']); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn-add-to-cart mb-1" onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 </section>
+<?php endif; ?>
+
+<!-- Best Sellers Section -->
+<?php if (!empty($bestSellers)): ?>
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fashion-title mb-1">Meilleures ventes</h2>
+                <p class="text-muted mb-0">Nos produits les plus populaires</p>
+            </div>
+            <a href="products.php?sort=popularity" class="btn btn-outline-primary">Voir plus</a>
+        </div>
+        <div class="row g-3">
+            <?php foreach ($bestSellers as $product): ?>
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
+                    <div class="product-image-container">
+                        <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
+                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        <?php else: ?>
+                            <div class="product-image d-flex align-items-center justify-content-center"><i class="fas fa-tshirt fa-3x text-muted"></i></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-info">
+                        <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
+                        <div class="product-price-container">
+                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                <span class="product-price"><?php echo formatPrice($product['sale_price']); ?></span>
+                                <span class="product-original-price"><?php echo formatPrice($product['price']); ?></span>
+                            <?php else: ?>
+                                <span class="product-price"><?php echo formatPrice($product['price']); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn-add-to-cart mb-1" onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- Newsletter Section -->
 <section class="py-5 bg-dark text-white">

@@ -25,6 +25,22 @@ try {
     exit();
 }
 
+// Récupérer la galerie d'images
+$images = [];
+try {
+    $stmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = :pid ORDER BY sort_order ASC, id ASC");
+    $stmt->execute([':pid' => $productId]);
+    $images = array_column($stmt->fetchAll(), 'image_url');
+} catch (Exception $e) {}
+
+// Récupérer les tailles disponibles
+$availableSizes = [];
+try {
+    $stmt = $pdo->prepare("SELECT s.id, s.name, ps.stock FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
+    $stmt->execute([':pid' => $productId]);
+    $availableSizes = $stmt->fetchAll();
+} catch (Exception $e) {}
+
 // Récupérer des produits similaires (même catégorie ou prix similaire)
 $similarProducts = [];
 try {
@@ -125,18 +141,34 @@ try {
         <div class="container">
             <div class="row">
                 <div class="col-lg-6 mb-4">
-                    <!-- Image du produit -->
-                    <div class="product-image-container">
-                        <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
-                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                 alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                 class="img-fluid rounded shadow product-main-image"
-                                 id="mainImage">
-                        <?php else: ?>
-                            <div class="bg-light d-flex align-items-center justify-content-center rounded shadow" 
-                                 style="height: 400px;">
-                                <i class="fas fa-image fa-5x text-muted"></i>
-                            </div>
+                    <!-- Galerie d'images -->
+                    <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner rounded shadow">
+                            <?php 
+                                $gallery = $images;
+                                if ($product['image_url']) { array_unshift($gallery, $product['image_url']); }
+                                $gallery = array_values(array_unique($gallery));
+                                if (empty($gallery)) {
+                                    echo '<div class="bg-light d-flex align-items-center justify-content-center rounded shadow" style="height: 400px;"><i class="fas fa-image fa-5x text-muted"></i></div>';
+                                } else {
+                                    foreach ($gallery as $idx => $imgUrl) {
+                                        $active = $idx === 0 ? 'active' : '';
+                                        echo '<div class="carousel-item ' . $active . '">';
+                                        echo '<img src="' . htmlspecialchars($imgUrl) . '" class="d-block w-100" alt="Image produit" style="max-height:500px; object-fit:contain;">';
+                                        echo '</div>';
+                                    }
+                                }
+                            ?>
+                        </div>
+                        <?php if (!empty($gallery) && count($gallery) > 1): ?>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Précédent</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Suivant</span>
+                        </button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -170,6 +202,20 @@ try {
                             <h5>Description</h5>
                             <p class="text-muted"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
                         </div>
+
+                        <!-- Tailles disponibles -->
+                        <?php if (!empty($availableSizes)): ?>
+                        <div class="mb-4">
+                            <h6>Tailles</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($availableSizes as $s): ?>
+                                    <?php $inStock = is_null($s['stock']) ? ($product['stock'] ?? 0) > 0 : ((int)$s['stock'] > 0); ?>
+                                    <input type="radio" class="btn-check" name="size" id="size_<?php echo $s['id']; ?>" autocomplete="off" <?php echo $inStock ? '' : 'disabled'; ?> data-stock="<?php echo $inStock ? (is_null($s['stock']) ? (int)($product['stock'] ?? 0) : (int)$s['stock']) : 0; ?>">
+                                    <label class="btn btn-outline-secondary btn-sm <?php echo $inStock ? '' : 'disabled'; ?>" for="size_<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <!-- Actions -->
                         <div class="mb-4">
@@ -299,6 +345,32 @@ try {
     <script>
         // Mettre à jour le compteur du panier au chargement
         updateCartCount();
+        // Adapter la quantité max en fonction de la taille sélectionnée
+        (function(){
+            const sizeInputs = document.querySelectorAll('input[name="size"]');
+            const qty = document.getElementById('quantity');
+            function updateQtyMax(stock) {
+                const current = parseInt(qty.value, 10) || 1;
+                const max = Math.max(1, Math.min(10, stock));
+                qty.innerHTML = '';
+                for (let i = 1; i <= max; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i; opt.textContent = i;
+                    qty.appendChild(opt);
+                }
+                if (current <= max) qty.value = current; else qty.value = max;
+            }
+            sizeInputs.forEach(r => {
+                r.addEventListener('change', () => {
+                    const stock = parseInt(r.getAttribute('data-stock') || '0', 10);
+                    updateQtyMax(stock);
+                });
+                if (r.checked) {
+                    const stock = parseInt(r.getAttribute('data-stock') || '0', 10);
+                    updateQtyMax(stock);
+                }
+            });
+        })();
     </script>
 </body>
 </html>
