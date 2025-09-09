@@ -30,6 +30,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $selectedSizes = isset($_POST['sizes']) && is_array($_POST['sizes']) ? array_map('intval', $_POST['sizes']) : [];
+        // Stocks par taille
+        $sizeStocks = [];
+        if (!empty($_POST['size_stock']) && is_array($_POST['size_stock'])) {
+            foreach ($_POST['size_stock'] as $sid => $val) {
+                $sid = (int)$sid;
+                $qty = (int)$val;
+                if ($qty < 0) { $qty = 0; }
+                $sizeStocks[$sid] = $qty;
+            }
+        }
 
         // Validation
         if (empty($name)) {
@@ -158,11 +168,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Enregistrer les tailles sélectionnées
                 if (!empty($selectedSizes)) {
-                    $sizeStmt = $pdo->prepare("INSERT IGNORE INTO product_sizes (product_id, size_id) VALUES (:product_id, :size_id)");
+                    $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (:product_id, :size_id, :stock)");
                     foreach ($selectedSizes as $sizeId) {
                         $sizeStmt->execute([
                             ':product_id' => $newProductId,
-                            ':size_id' => (int)$sizeId
+                            ':size_id' => (int)$sizeId,
+                            ':stock' => isset($sizeStocks[$sizeId]) ? (int)$sizeStocks[$sizeId] : null
                         ]);
                     }
                 }
@@ -326,15 +337,18 @@ include 'layouts/header.php';
                                             <label class="form-label">
                                                 <i class="fas fa-ruler-combined me-1"></i>Tailles disponibles
                                             </label>
-                                            <div class="d-flex flex-wrap gap-2">
+                                            <div class="d-flex flex-column gap-2">
                                                 <?php foreach ($sizes as $size): ?>
-                                                    <div class="form-check form-check-inline">
-                                                        <input class="form-check-input" type="checkbox" id="size_<?php echo $size['id']; ?>" name="sizes[]" value="<?php echo (int)$size['id']; ?>" <?php echo in_array((int)$size['id'], $selectedSizes ?? []) ? 'checked' : ''; ?>>
-                                                        <label class="form-check-label" for="size_<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['name']); ?></label>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="size_<?php echo $size['id']; ?>" name="sizes[]" value="<?php echo (int)$size['id']; ?>" <?php echo in_array((int)$size['id'], $selectedSizes ?? []) ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label" for="size_<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['name']); ?></label>
+                                                        </div>
+                                                        <input type="number" class="form-control form-control-sm" name="size_stock[<?php echo (int)$size['id']; ?>]" min="0" placeholder="Stock" style="width: 120px;">
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>
-                                            <div class="form-text">Sélectionnez plusieurs tailles si nécessaire</div>
+                                            <div class="form-text">Définissez un stock par taille (optionnel)</div>
                                         </div>
                                     </div>
                                 </div>

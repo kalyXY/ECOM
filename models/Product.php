@@ -167,7 +167,7 @@ class Product {
                 $product['images'] = $images;
 
                 // Récupérer les tailles disponibles
-                $sizeStmt = $this->pdo->prepare("SELECT s.id, s.name FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
+                $sizeStmt = $this->pdo->prepare("SELECT s.id, s.name, ps.stock as size_stock FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
                 $sizeStmt->execute([':pid' => $id]);
                 $product['sizes'] = $sizeStmt->fetchAll();
             }

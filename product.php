@@ -36,7 +36,7 @@ try {
 // Récupérer les tailles disponibles
 $availableSizes = [];
 try {
-    $stmt = $pdo->prepare("SELECT s.id, s.name FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
+    $stmt = $pdo->prepare("SELECT s.id, s.name, ps.stock FROM product_sizes ps JOIN sizes s ON ps.size_id = s.id WHERE ps.product_id = :pid ORDER BY s.sort_order ASC, s.name ASC");
     $stmt->execute([':pid' => $productId]);
     $availableSizes = $stmt->fetchAll();
 } catch (Exception $e) {}
@@ -209,8 +209,9 @@ try {
                             <h6>Tailles</h6>
                             <div class="d-flex flex-wrap gap-2">
                                 <?php foreach ($availableSizes as $s): ?>
-                                    <input type="radio" class="btn-check" name="size" id="size_<?php echo $s['id']; ?>" autocomplete="off">
-                                    <label class="btn btn-outline-secondary btn-sm" for="size_<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></label>
+                                    <?php $inStock = is_null($s['stock']) ? ($product['stock'] ?? 0) > 0 : ((int)$s['stock'] > 0); ?>
+                                    <input type="radio" class="btn-check" name="size" id="size_<?php echo $s['id']; ?>" autocomplete="off" <?php echo $inStock ? '' : 'disabled'; ?> data-stock="<?php echo $inStock ? (is_null($s['stock']) ? (int)($product['stock'] ?? 0) : (int)$s['stock']) : 0; ?>">
+                                    <label class="btn btn-outline-secondary btn-sm <?php echo $inStock ? '' : 'disabled'; ?>" for="size_<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></label>
                                 <?php endforeach; ?>
                             </div>
                         </div>
@@ -344,6 +345,32 @@ try {
     <script>
         // Mettre à jour le compteur du panier au chargement
         updateCartCount();
+        // Adapter la quantité max en fonction de la taille sélectionnée
+        (function(){
+            const sizeInputs = document.querySelectorAll('input[name="size"]');
+            const qty = document.getElementById('quantity');
+            function updateQtyMax(stock) {
+                const current = parseInt(qty.value, 10) || 1;
+                const max = Math.max(1, Math.min(10, stock));
+                qty.innerHTML = '';
+                for (let i = 1; i <= max; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i; opt.textContent = i;
+                    qty.appendChild(opt);
+                }
+                if (current <= max) qty.value = current; else qty.value = max;
+            }
+            sizeInputs.forEach(r => {
+                r.addEventListener('change', () => {
+                    const stock = parseInt(r.getAttribute('data-stock') || '0', 10);
+                    updateQtyMax(stock);
+                });
+                if (r.checked) {
+                    const stock = parseInt(r.getAttribute('data-stock') || '0', 10);
+                    updateQtyMax(stock);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

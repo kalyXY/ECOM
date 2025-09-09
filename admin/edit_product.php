@@ -18,6 +18,7 @@ $success = '';
 $categories = [];
 $sizes = [];
 $productImages = [];
+$existingSizeStocks = [];
 try { $categories = $pdo->query("SELECT id, name FROM categories WHERE status = 'active' ORDER BY name ASC")->fetchAll(); } catch (Exception $e) {}
 try { $sizes = $pdo->query("SELECT id, name FROM sizes ORDER BY sort_order ASC, name ASC")->fetchAll(); } catch (Exception $e) {}
 try {
@@ -28,9 +29,11 @@ try {
 // Tailles liées
 $selectedSizes = [];
 try {
-    $stmtSel = $pdo->prepare("SELECT size_id FROM product_sizes WHERE product_id = :pid");
+    $stmtSel = $pdo->prepare("SELECT size_id, stock FROM product_sizes WHERE product_id = :pid");
     $stmtSel->execute([':pid' => $productId]);
-    $selectedSizes = array_map('intval', array_column($stmtSel->fetchAll(), 'size_id'));
+    $rows = $stmtSel->fetchAll();
+    $selectedSizes = array_map('intval', array_column($rows, 'size_id'));
+    foreach ($rows as $r) { $existingSizeStocks[(int)$r['size_id']] = is_null($r['stock']) ? '' : (int)$r['stock']; }
 } catch (Exception $e) {}
 
 // Récupérer les informations du produit
@@ -65,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $postedSizes = isset($_POST['sizes']) && is_array($_POST['sizes']) ? array_map('intval', $_POST['sizes']) : [];
+        $sizeStocks = [];
+        if (!empty($_POST['size_stock']) && is_array($_POST['size_stock'])) {
+            foreach ($_POST['size_stock'] as $sid => $val) {
+                $sid = (int)$sid;
+                $qty = (int)$val;
+                if ($qty < 0) { $qty = 0; }
+                $sizeStocks[$sid] = $qty;
+            }
+        }
 
         // Validation
         if (empty($name)) {
@@ -164,9 +176,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Mettre à jour les tailles liées
                 $pdo->prepare("DELETE FROM product_sizes WHERE product_id = :pid")->execute([':pid' => $productId]);
                 if (!empty($postedSizes)) {
-                    $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id) VALUES (:pid, :sid)");
+                    $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (:pid, :sid, :stk)");
                     foreach ($postedSizes as $sid) {
-                        $sizeStmt->execute([':pid' => $productId, ':sid' => (int)$sid]);
+                        $sizeStmt->execute([':pid' => $productId, ':sid' => (int)$sid, ':stk' => isset($sizeStocks[$sid]) ? (int)$sizeStocks[$sid] : null]);
                     }
                 }
 
@@ -307,6 +319,42 @@ include 'layouts/header.php';
                                             <div class="form-text">
                                                 <i class="fas fa-info-circle me-1"></i>
                                                 Quantité disponible en stock
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="category_id" class="form-label">
+                                                <i class="fas fa-layer-group me-1"></i>Catégorie
+                                            </label>
+                                            <select class="form-select" id="category_id" name="category_id">
+                                                <option value="">-- Aucune --</option>
+                                                <?php foreach ($categories as $cat): ?>
+                                                    <option value="<?php echo (int)$cat['id']; ?>" <?php echo ((int)($product['category_id'] ?? 0) === (int)$cat['id']) ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($cat['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-ruler-combined me-1"></i>Tailles disponibles
+                                            </label>
+                                            <div class="d-flex flex-column gap-2">
+                                                <?php foreach ($sizes as $size): ?>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="size_<?php echo $size['id']; ?>" name="sizes[]" value="<?php echo (int)$size['id']; ?>" <?php echo in_array((int)$size['id'], $selectedSizes) ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label" for="size_<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['name']); ?></label>
+                                                        </div>
+                                                        <input type="number" class="form-control form-control-sm" name="size_stock[<?php echo (int)$size['id']; ?>]" min="0" placeholder="Stock" style="width: 120px;" value="<?php echo htmlspecialchars($existingSizeStocks[(int)$size['id']] ?? ''); ?>">
+                                                    </div>
+                                                <?php endforeach; ?>
                                             </div>
                                         </div>
                                     </div>
