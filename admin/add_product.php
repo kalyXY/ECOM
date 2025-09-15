@@ -516,7 +516,7 @@ include 'layouts/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate data-auto-save="add_product">
-                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFTokenUltra(); ?>">
                         
                         <div class="row">
                             <div class="col-lg-8">
