@@ -241,70 +241,142 @@ class Product {
     public function create($data) {
         try {
             $this->pdo->beginTransaction();
-            
-            // Insérer le produit principal
-            $sql = "INSERT INTO products (
-                name, description, price, sale_price, sku, stock, category_id,
-                brand, material, gender, season, image_url, featured, status, created_at
-            ) VALUES (
-                :name, :description, :price, :sale_price, :sku, :stock, :category_id,
-                :brand, :material, :gender, :season, :image_url, :featured, 'active', NOW()
-            )";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $result = $stmt->execute([
+
+            // Découvrir les colonnes existantes de la table products
+            try {
+                $columns = $this->pdo->query("DESCRIBE products")->fetchAll(PDO::FETCH_COLUMN);
+            } catch (Exception $e) {
+                $columns = [];
+            }
+
+            // Construction dynamique de la requête d'insertion pour s'adapter au schéma réel
+            $sql = "INSERT INTO products (name, description, price, stock, image_url, status, created_at";
+            $values = "VALUES (:name, :description, :price, :stock, :image_url, 'active', NOW()";
+            $params = [
                 ':name' => $data['name'],
                 ':description' => $data['description'],
                 ':price' => $data['price'],
-                ':sale_price' => $data['sale_price'] ?? null,
-                ':sku' => $data['sku'] ?? null,
                 ':stock' => $data['stock'] ?? 0,
-                ':category_id' => $data['category_id'] ?? null,
-                ':brand' => $data['brand'] ?? null,
-                ':material' => $data['material'] ?? null,
-                ':gender' => $data['gender'] ?? 'unisexe',
-                ':season' => $data['season'] ?? 'toute_saison',
                 ':image_url' => $data['image_url'] ?? null,
-                ':featured' => $data['featured'] ?? 0
-            ]);
-            
+            ];
+
+            // Slug unique si la colonne existe
+            if (in_array('slug', $columns, true)) {
+                $baseSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', @iconv('UTF-8', 'ASCII//TRANSLIT', $data['name'])), '-'));
+                if ($baseSlug === '' || $baseSlug === '-') { $baseSlug = 'produit'; }
+                $candidate = $baseSlug;
+                $i = 1;
+                $slugCheckStmt = $this->pdo->prepare("SELECT COUNT(*) FROM products WHERE slug = ?");
+                while (true) {
+                    $slugCheckStmt->execute([$candidate]);
+                    if ((int)$slugCheckStmt->fetchColumn() === 0) { break; }
+                    $candidate = $baseSlug . '-' . (++$i);
+                }
+                $sql .= ", slug";
+                $values .= ", :slug";
+                $params[':slug'] = $candidate;
+            }
+
+            if (in_array('sale_price', $columns, true)) {
+                $sql .= ", sale_price";
+                $values .= ", :sale_price";
+                $params[':sale_price'] = $data['sale_price'] ?? null;
+            }
+
+            if (in_array('sku', $columns, true)) {
+                $sql .= ", sku";
+                $values .= ", :sku";
+                $params[':sku'] = $data['sku'] ?? null;
+            }
+
+            if (in_array('category_id', $columns, true)) {
+                $sql .= ", category_id";
+                $values .= ", :category_id";
+                $params[':category_id'] = $data['category_id'] ?? null;
+            }
+
+            if (in_array('brand', $columns, true)) {
+                $sql .= ", brand";
+                $values .= ", :brand";
+                $params[':brand'] = $data['brand'] ?? null;
+            }
+
+            if (in_array('material', $columns, true)) {
+                $sql .= ", material";
+                $values .= ", :material";
+                $params[':material'] = $data['material'] ?? null;
+            }
+
+            if (in_array('gender', $columns, true)) {
+                $sql .= ", gender";
+                $values .= ", :gender";
+                $params[':gender'] = $data['gender'] ?? 'unisexe';
+            }
+
+            if (in_array('season', $columns, true)) {
+                $sql .= ", season";
+                $values .= ", :season";
+                $params[':season'] = $data['season'] ?? 'toute_saison';
+            }
+
+            if (in_array('gallery', $columns, true)) {
+                $sql .= ", gallery";
+                $values .= ", :gallery";
+                $galleryValue = null;
+                if (!empty($data['gallery'])) {
+                    $galleryValue = is_array($data['gallery']) ? json_encode($data['gallery']) : $data['gallery'];
+                }
+                $params[':gallery'] = $galleryValue;
+            }
+
+            if (in_array('featured', $columns, true)) {
+                $sql .= ", featured";
+                $values .= ", :featured";
+                $params[':featured'] = $data['featured'] ?? 0;
+            }
+
+            $sql .= ") " . $values . ")";
+
+            $stmt = $this->pdo->prepare($sql);
+            $result = $stmt->execute($params);
+
             if ($result) {
                 $productId = $this->pdo->lastInsertId();
-                
+
                 // Ajouter les images
                 if (!empty($data['images'])) {
                     $this->addProductImages($productId, $data['images']);
                 }
-                
+
                 // Ajouter les tailles
                 if (!empty($data['sizes'])) {
                     $this->addProductSizes($productId, $data['sizes']);
                 }
-                
+
                 // Ajouter les couleurs
                 if (!empty($data['colors'])) {
                     $this->addProductColors($productId, $data['colors']);
                 }
-                
+
                 // Log de l'action
                 Security::logAction('product_created', [
-                    'product_id' => $productId, 
+                    'product_id' => $productId,
                     'name' => $data['name'],
                     'images_count' => count($data['images'] ?? []),
                     'sizes_count' => count($data['sizes'] ?? [])
                 ]);
-                
+
                 $this->pdo->commit();
-                
+
                 // Invalider les caches
                 $this->clearProductCache();
-                
+
                 return ['success' => true, 'id' => $productId];
             }
-            
+
             $this->pdo->rollBack();
             return ['success' => false, 'error' => 'Erreur lors de la création'];
-            
+
         } catch (Exception $e) {
             $this->pdo->rollBack();
             error_log("Error creating product: " . $e->getMessage());

@@ -100,11 +100,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!empty($sku)) {
-            // Vérifier l'unicité du SKU
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE sku = ?");
-            $stmt->execute([$sku]);
-            if ($stmt->fetchColumn() > 0) {
-                $errors[] = 'Ce SKU existe déjà.';
+            // Vérifier l'existence de la colonne SKU avant d'effectuer la vérification d'unicité
+            try {
+                $columns = $pdo->query("DESCRIBE products")->fetchAll(PDO::FETCH_COLUMN);
+            } catch (Exception $e) {
+                $columns = [];
+            }
+            if (in_array('sku', $columns, true)) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE sku = ?");
+                $stmt->execute([$sku]);
+                if ((int)$stmt->fetchColumn() > 0) {
+                    $errors[] = 'Ce SKU existe déjà.';
+                }
             }
         }
 
@@ -210,7 +217,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
                 
                 // Ajouter les colonnes optionnelles si elles existent
-                $columns = $pdo->query("DESCRIBE products")->fetchAll(PDO::FETCH_COLUMN);
+                if (!isset($columns) || empty($columns)) {
+                    $columns = $pdo->query("DESCRIBE products")->fetchAll(PDO::FETCH_COLUMN);
+                }
 
                 // Générer et ajouter le slug si la colonne existe
                 if (in_array('slug', $columns)) {
