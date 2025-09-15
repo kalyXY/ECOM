@@ -365,8 +365,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        }
     }
+}
 
 $pageTitle = 'Ajouter un Produit';
 $active = 'add_product';
