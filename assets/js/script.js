@@ -383,8 +383,7 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
-// 
-Fonctions spécifiques à la mode
+// Fonctions spécifiques à la mode
 
 // Fonction pour gérer la sélection de taille
 function selectSize(element, size) {

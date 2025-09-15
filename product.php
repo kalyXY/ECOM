@@ -86,44 +86,7 @@ try {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($product['name']); ?> - E-Commerce</title>
-    <meta name="description" content="<?php echo htmlspecialchars(substr($product['description'], 0, 160)); ?>">
-    <link href="https://cdn.jsdelivr.nm">
-                        <a class="nav-link" href="products.php">
-                            <i class="fas fa-box me-1"></i>Produits
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">
-                            <i class="fas fa-envelope me-1"></i>Contact
-                        </a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link position-relative" href="cart.php">
-                            <i class="fas fa-shopping-cart me-1"></i>Panier
-                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="cart-count">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="admin/login.php">
-                            <i class="fas fa-user-shield me-1"></i>Admin
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Spacer pour navbar fixe -->
-    <div style="height: 76px;"></div>
+<?php $pageTitle = $product['name']; include 'includes/header.php'; ?>
 
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="bg-light py-3">
@@ -309,39 +272,7 @@ try {
     </section>
     <?php endif; ?>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-5 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5><i class="fas fa-store me-2"></i>E-Commerce</h5>
-                    <p class="mb-3">Votre boutique en ligne de confiance depuis 2024.</p>
-                </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6>Navigation</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white-50 text-decoration-none">Accueil</a></li>
-                        <li><a href="products.php" class="text-white-50 text-decoration-none">Produits</a></li>
-                        <li><a href="contact.php" class="text-white-50 text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h6>Contact</h6>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-phone me-2"></i>01 23 45 67 89</li>
-                        <li><i class="fas fa-envelope me-2"></i>contact@ecommerce.com</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-4">
-            <div class="text-center">
-                <small class="text-muted">© 2024 E-Commerce. Tous droits réservés.</small>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/script.js"></script>
+    <?php include 'includes/footer.php'; ?>
     <script>
         // Mettre à jour le compteur du panier au chargement
         updateCartCount();

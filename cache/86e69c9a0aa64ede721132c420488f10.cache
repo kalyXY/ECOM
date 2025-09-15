@@ -1,5 +1,1 @@
-<<<<<<< HEAD
-a:2:{s:5:"value";a:0:{}s:7:"expires";i:1757945974;}
-=======
-a:2:{s:5:"value";a:0:{}s:7:"expires";i:1757943830;}
->>>>>>> 470ce02 (Enhance security and form handling in add_product.php; update CSRF token generation for better protection. Adjust session cookie settings in security.php to use 'Lax' for SameSite attribute. Update cache expiration timestamp.)
+a:2:{s:5:"value";a:0:{}s:7:"expires";i:1758010892;}
