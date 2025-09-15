@@ -19,8 +19,18 @@
     <!-- Custom Admin CSS -->
     <link href="assets/css/admin.css" rel="stylesheet">
     
+    <!-- Enhanced Admin CSS -->
+    <link href="assets/css/admin-enhanced.css" rel="stylesheet">
+    
+    <!-- Theme Configuration CSS -->
+    <link href="assets/css/theme-config.css" rel="stylesheet">
+    
     <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- AOS - Animate On Scroll -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Interface d'administration E-Commerce">
