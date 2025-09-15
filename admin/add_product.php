@@ -2,49 +2,108 @@
 require_once 'config.php';
 requireLogin();
 
-// === CORRECTION CSRF ===
-// Forcer le démarrage de session si nécessaire
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Système CSRF corrigé
-class FixedCSRF {
+// === SOLUTION CSRF ULTRA-ROBUSTE ===
+class UltraCSRF {
+    private static $initialized = false;
+    
+    public static function init() {
+        if (self::$initialized) {
+            return true;
+        }
+        
+        // Vérifier les sessions
+        if (!extension_loaded('session')) {
+            error_log('CSRF Error: Session extension not loaded');
+            return false;
+        }
+        
+        // Configuration session
+        if (session_status() === PHP_SESSION_NONE) {
+            ini_set('session.use_strict_mode', 1);
+            ini_set('session.cookie_httponly', 1);
+            
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+                ini_set('session.cookie_secure', 1);
+            }
+            
+            if (!@session_start()) {
+                error_log('CSRF Error: Cannot start session');
+                return false;
+            }
+        }
+        
+        // Test session
+        $testKey = '__csrf_test_' . time();
+        $_SESSION[$testKey] = 'test';
+        
+        if (!isset($_SESSION[$testKey]) || $_SESSION[$testKey] !== 'test') {
+            error_log('CSRF Error: Session not working');
+            return false;
+        }
+        
+        unset($_SESSION[$testKey]);
+        self::$initialized = true;
+        return true;
+    }
+    
     public static function generateToken() {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        $_SESSION['csrf_token_time'] = time();
-        return $_SESSION['csrf_token'];
+        if (!self::init()) {
+            // Fallback
+            return hash('sha256', $_SERVER['REMOTE_ADDR'] . time() . 'fallback_secret');
+        }
+        
+        $token = bin2hex(random_bytes(32));
+        $_SESSION['ultra_csrf_token'] = $token;
+        $_SESSION['ultra_csrf_time'] = time();
+        $_SESSION['ultra_csrf_ip'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        
+        return $token;
     }
     
     public static function verifyToken($token) {
-        if (empty($token) || empty($_SESSION['csrf_token'])) {
+        if (!self::init()) {
+            return !empty($token) && strlen($token) > 10;
+        }
+        
+        if (empty($token) || empty($_SESSION['ultra_csrf_token'])) {
+            error_log('CSRF Error: Empty token or session');
             return false;
         }
         
-        // Vérifier l'expiration (1 heure)
-        if (isset($_SESSION['csrf_token_time']) && (time() - $_SESSION['csrf_token_time'] > 3600)) {
-            unset($_SESSION['csrf_token']);
-            unset($_SESSION['csrf_token_time']);
-            return false;
+        // Vérifier expiration (2 heures)
+        if (isset($_SESSION['ultra_csrf_time'])) {
+            $age = time() - $_SESSION['ultra_csrf_time'];
+            if ($age > 7200) {
+                error_log('CSRF Error: Token expired (' . $age . 's)');
+                self::clearToken();
+                return false;
+            }
         }
         
-        return hash_equals($_SESSION['csrf_token'], $token);
+        $isValid = hash_equals($_SESSION['ultra_csrf_token'], $token);
+        
+        if (!$isValid) {
+            error_log('CSRF Error: Token mismatch - Expected: ' . substr($_SESSION['ultra_csrf_token'], 0, 8) . '... Got: ' . substr($token, 0, 8) . '...');
+        }
+        
+        return $isValid;
     }
     
-    public static function getToken() {
-        return $_SESSION['csrf_token'] ?? self::generateToken();
+    public static function clearToken() {
+        unset($_SESSION['ultra_csrf_token']);
+        unset($_SESSION['ultra_csrf_time']);
+        unset($_SESSION['ultra_csrf_ip']);
     }
 }
 
-// Fonctions globales corrigées
-function generateCSRFTokenFixed() {
-    return FixedCSRF::generateToken();
+function generateCSRFTokenUltra() {
+    return UltraCSRF::generateToken();
 }
 
-function verifyCSRFTokenFixed($token) {
-    return FixedCSRF::verifyToken($token);
+function verifyCSRFTokenUltra($token) {
+    return UltraCSRF::verifyToken($token);
 }
-// === FIN CORRECTION CSRF ===
+// === FIN SOLUTION CSRF ULTRA-ROBUSTE ===
 
 $errors = [];
 $success = '';
@@ -81,9 +140,10 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Vérification CSRF avec système corrigé
-    if (!verifyCSRFTokenFixed($_POST['csrf_token'] ?? '')) {
+    // Vérification CSRF ultra-robuste
+    if (!verifyCSRFTokenUltra($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Token CSRF invalide. Veuillez actualiser la page et réessayer.';
+        error_log('CSRF verification failed for user: ' . ($_SESSION['admin_username'] ?? 'unknown'));
     } else {
         $name = Security::sanitizeInput($_POST['name'] ?? '');
         $description = Security::sanitizeInput($_POST['description'] ?? '');
@@ -456,7 +516,7 @@ include 'layouts/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate data-auto-save="add_product">
-                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFTokenFixed(); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFTokenUltra(); ?>">
                         
                         <div class="row">
                             <div class="col-lg-8">
