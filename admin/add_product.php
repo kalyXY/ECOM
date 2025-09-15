@@ -412,7 +412,8 @@ include 'layouts/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate data-auto-save="add_product">
-                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <?php // Toujours régénérer/assurer le token sur affichage du formulaire ?>
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generateCSRFToken()); ?>">
                         
                         <div class="row">
                             <div class="col-lg-8">
