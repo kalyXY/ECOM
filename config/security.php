@@ -64,7 +64,15 @@ class Security {
             case 'int':
                 return (int) filter_var($input, FILTER_SANITIZE_NUMBER_INT);
             case 'float':
-                return (float) filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                // Normaliser les nombres décimaux (gérer virgules et espaces)
+                $normalized = str_replace([' ', '\u00A0'], '', $input); // enlever espaces classiques et insécables
+                $normalized = str_replace(',', '.', $normalized); // convertir virgule en point décimal
+                // Garder uniquement chiffres, signe et point
+                $normalized = preg_replace('/[^0-9\.-]/', '', $normalized);
+                if ($normalized === '' || $normalized === '-' || $normalized === '.') {
+                    return null;
+                }
+                return (float) $normalized;
             case 'url':
                 return filter_var($input, FILTER_SANITIZE_URL);
             case 'html':

@@ -8,16 +8,29 @@ $productModel = new Product($pdo);
 // Récupérer les produits en vedette avec le nouveau système
 $featuredProducts = [];
 try {
-    $result = $productModel->getAll(['featured' => true], 1, 8);
+    // Désactiver le cache pour que les nouveaux produits apparaissent immédiatement
+    $result = $productModel->getAll(['featured' => true], 1, 8, false);
     $featuredProducts = $result['products'];
 } catch (Exception $e) {
-    // En cas d'erreur, récupérer les produits populaires
     try {
         $featuredProducts = $productModel->getPopular(8);
     } catch (Exception $e) {
         $featuredProducts = [];
     }
 }
+
+// Produits récents
+$recentProducts = [];
+try {
+    $recent = $productModel->getAll(['sort' => 'created_at_desc'], 1, 8, false);
+    $recentProducts = $recent['products'];
+} catch (Exception $e) { $recentProducts = []; }
+
+// Meilleures ventes ou populaires
+$bestSellers = [];
+try {
+    $bestSellers = $productModel->getPopular(8);
+} catch (Exception $e) { $bestSellers = []; }
 
 // Récupérer les catégories principales
 $categories = [];

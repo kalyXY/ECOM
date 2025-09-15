@@ -185,74 +185,147 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Si pas d'erreurs, ajouter le produit
         if (empty($errors)) {
             try {
-                $pdo->beginTransaction();
-
-                // Insérer le produit principal avec tous les champs
-                $stmt = $pdo->prepare("
-                    INSERT INTO products (
-                        name, description, price, sale_price, sku, stock, category_id, 
-                        brand, material, gender, season, image_url, featured, status, created_at
-                    ) VALUES (
-                        :name, :description, :price, :sale_price, :sku, :stock, :category_id,
-                        :brand, :material, :gender, :season, :image_url, :featured, 'active', NOW()
-                    )
-                ");
+                // Démarrer une transaction si non démarrée
+                if (!$pdo->inTransaction()) {
+                    $pdo->beginTransaction();
+                }
+                // Préparer les données JSON pour les champs compatibles
+                $galleryJson = !empty($galleryImages) ? json_encode($galleryImages) : null;
+                $sizesJson = !empty($selectedSizes) ? json_encode($selectedSizes) : null;
                 
-                $stmt->execute([
+                // Générer un SKU automatique si vide
+                if (empty($sku)) {
+                    $sku = 'PRD' . str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                }
+                
+                // Insérer le produit avec les colonnes existantes
+                $sql = "INSERT INTO products (name, description, price, stock, image_url, status, created_at";
+                $values = "VALUES (:name, :description, :price, :stock, :image_url, 'active', NOW()";
+                $params = [
                     ':name' => $name,
                     ':description' => $description,
                     ':price' => $price,
-                    ':sale_price' => $salePrice,
-                    ':sku' => $sku ?: null,
                     ':stock' => $stock,
-                    ':category_id' => $categoryId,
-                    ':brand' => $brand ?: null,
-                    ':material' => $material ?: null,
-                    ':gender' => $gender,
-                    ':season' => $season,
-                    ':image_url' => $imageUrl,
-                    ':featured' => $featured
-                ]);
+                    ':image_url' => $imageUrl
+                ];
+                
+                // Ajouter les colonnes optionnelles si elles existent
+                $columns = $pdo->query("DESCRIBE products")->fetchAll(PDO::FETCH_COLUMN);
 
-                $newProductId = (int)$pdo->lastInsertId();
-
-                // Enregistrer toutes les images dans product_images (y compris la principale)
-                if (!empty($galleryImages)) {
-                    $imgStmt = $pdo->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (:product_id, :image_url, :sort_order)");
-                    foreach ($galleryImages as $idx => $url) {
-                        $imgStmt->execute([
-                            ':product_id' => $newProductId,
-                            ':image_url' => $url,
-                            ':sort_order' => $idx
-                        ]);
+                // Générer et ajouter le slug si la colonne existe
+                if (in_array('slug', $columns)) {
+                    $baseSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', @iconv('UTF-8', 'ASCII//TRANSLIT', $name)), '-'));
+                    if ($baseSlug === '' || $baseSlug === '-') { $baseSlug = 'produit'; }
+                    $candidate = $baseSlug;
+                    $i = 1;
+                    $slugCheckStmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE slug = ?");
+                    while (true) {
+                        $slugCheckStmt->execute([$candidate]);
+                        if ((int)$slugCheckStmt->fetchColumn() === 0) { break; }
+                        $candidate = $baseSlug . '-' . (++$i);
                     }
+                    $sql .= ", slug";
+                    $values .= ", :slug";
+                    $params[':slug'] = $candidate;
                 }
-
-                // Enregistrer les tailles sélectionnées avec gestion de stock individuel
+                
+                if (in_array('sale_price', $columns)) {
+                    $sql .= ", sale_price";
+                    $values .= ", :sale_price";
+                    $params[':sale_price'] = $salePrice;
+                }
+                
+                if (in_array('sku', $columns)) {
+                    $sql .= ", sku";
+                    $values .= ", :sku";
+                    $params[':sku'] = $sku;
+                }
+                
+                if (in_array('category_id', $columns)) {
+                    $sql .= ", category_id";
+                    $values .= ", :category_id";
+                    $params[':category_id'] = $categoryId;
+                }
+                
+                if (in_array('brand', $columns)) {
+                    $sql .= ", brand";
+                    $values .= ", :brand";
+                    $params[':brand'] = $brand ?: null;
+                }
+                
+                if (in_array('material', $columns)) {
+                    $sql .= ", material";
+                    $values .= ", :material";
+                    $params[':material'] = $material ?: null;
+                }
+                
+                if (in_array('gender', $columns)) {
+                    $sql .= ", gender";
+                    $values .= ", :gender";
+                    $params[':gender'] = $gender;
+                }
+                
+                if (in_array('season', $columns)) {
+                    $sql .= ", season";
+                    $values .= ", :season";
+                    $params[':season'] = $season;
+                }
+                
+                if (in_array('gallery', $columns)) {
+                    $sql .= ", gallery";
+                    $values .= ", :gallery";
+                    $params[':gallery'] = $galleryJson;
+                }
+                
+                if (in_array('featured', $columns)) {
+                    $sql .= ", featured";
+                    $values .= ", :featured";
+                    $params[':featured'] = $featured;
+                }
+                
+                $sql .= ") " . $values . ")";
+                
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                
+                $newProductId = $pdo->lastInsertId();
+                
+                // Enregistrer les tailles si les tables existent
                 if (!empty($selectedSizes)) {
-                    $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (:product_id, :size_id, :stock)");
-                    foreach ($selectedSizes as $sizeId) {
-                        $sizeStock = isset($sizeStocks[$sizeId]) ? (int)$sizeStocks[$sizeId] : null;
-                        $sizeStmt->execute([
-                            ':product_id' => $newProductId,
-                            ':size_id' => (int)$sizeId,
-                            ':stock' => $sizeStock
-                        ]);
-                    }
-                }
-
-                // Enregistrer les couleurs sélectionnées (si table product_colors existe)
-                if (!empty($selectedColors)) {
                     try {
-                        $colorStmt = $pdo->prepare("INSERT INTO product_colors (product_id, color_id) VALUES (:product_id, :color_id)");
-                        foreach ($selectedColors as $colorId) {
-                            $colorStmt->execute([
-                                ':product_id' => $newProductId,
-                                ':color_id' => (int)$colorId
-                            ]);
+                        $sizeStmt = $pdo->prepare("INSERT INTO product_sizes (product_id, size_id, stock) VALUES (?, ?, ?)");
+                        foreach ($selectedSizes as $sizeId) {
+                            $sizeStock = isset($sizeStocks[$sizeId]) ? (int)$sizeStocks[$sizeId] : 0;
+                            $sizeStmt->execute([$newProductId, (int)$sizeId, $sizeStock]);
                         }
                     } catch (PDOException $e) {
-                        // Table product_colors n'existe pas encore, on ignore
+                        // Table n'existe pas, ignorer
+                    }
+                }
+                
+                // Enregistrer les images supplémentaires si la table existe
+                if (!empty($galleryImages) && count($galleryImages) > 1) {
+                    try {
+                        $imgStmt = $pdo->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
+                        foreach ($galleryImages as $idx => $url) {
+                            if ($idx > 0) { // Ignorer la première (déjà dans image_url)
+                                $imgStmt->execute([$newProductId, $url, $idx]);
+                            }
+                        }
+                    } catch (PDOException $e) {
+                        // Table n'existe pas, ignorer
+                    }
+                }
+                
+                // Enregistrer les couleurs sélectionnées si la table product_colors existe
+                if (!empty($selectedColors)) {
+                    try {
+                        $colorStmt = $pdo->prepare("INSERT INTO product_colors (product_id, color_id) VALUES (:pid, :cid)");
+                        foreach ($selectedColors as $colorId) {
+                            $colorStmt->execute([':pid' => (int)$newProductId, ':cid' => (int)$colorId]);
+                        }
+                    } catch (PDOException $e) {
+                        // Table product_colors non disponible, on ignore
                     }
                 }
 
@@ -294,7 +367,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         }
     }
-}
 
 $pageTitle = 'Ajouter un Produit';
 $active = 'add_product';
@@ -875,8 +947,19 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         const name = document.getElementById('name').value.trim();
         const description = document.getElementById('description').value.trim();
-        const price = parseFloat(document.getElementById('price').value);
-        const salePrice = document.getElementById('sale_price').value;
+
+        // Normaliser les nombres (virgules -> points, suppression des espaces)
+        const priceEl = document.getElementById('price');
+        const salePriceEl = document.getElementById('sale_price');
+        const normalize = (v) => {
+            if (v === undefined || v === null) return '';
+            return String(v).replace(/\s/g, '').replace(',', '.');
+        };
+        priceEl.value = normalize(priceEl.value);
+        salePriceEl.value = normalize(salePriceEl.value);
+
+        const price = parseFloat(priceEl.value);
+        const salePrice = salePriceEl.value;
         
         let errors = [];
         

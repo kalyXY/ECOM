@@ -956,6 +956,27 @@ LEFT JOIN orders o ON oi.order_id = o.id AND o.status IN ('processing', 'shipped
 GROUP BY p.id;
 
 -- ============================================================================
+-- 13. HARMONISATION DU SCHÉMA AVEC LE CODE
+-- ============================================================================
+
+-- Ajouter les colonnes utilisées par le code applicatif si elles n'existent pas
+ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS brand VARCHAR(100) NULL AFTER brand_id,
+    ADD COLUMN IF NOT EXISTS color VARCHAR(50) NULL AFTER brand,
+    ADD COLUMN IF NOT EXISTS size VARCHAR(50) NULL AFTER color,
+    ADD COLUMN IF NOT EXISTS tags JSON NULL AFTER gallery,
+    ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) NOT NULL DEFAULT 0.00 AFTER rating_count;
+
+-- Index pour les nouvelles colonnes
+ALTER TABLE products
+    ADD INDEX IF NOT EXISTS idx_brand_text (brand),
+    ADD INDEX IF NOT EXISTS idx_color (color),
+    ADD INDEX IF NOT EXISTS idx_size (size),
+    ADD INDEX IF NOT EXISTS idx_rating (rating);
+
+-- Noter: le modèle utilise rating pour le tri; rating_average reste pour la moyenne calculée
+
+-- ============================================================================
 -- FINALISATION
 -- ============================================================================
 
