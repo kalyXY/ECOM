@@ -116,28 +116,28 @@ include 'layouts/header.php';
             
             <!-- Cartes de statistiques -->
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card primary" data-aos="fade-up" data-aos-delay="100" data-tooltip="Nombre total de produits dans le catalogue">
                     <div class="stat-header">
                         <div class="stat-title">Total Produits</div>
                         <div class="stat-icon primary">
                             <i class="fas fa-box"></i>
                         </div>
                     </div>
-                    <div class="stat-value"><?php echo number_format($totalProducts); ?></div>
+                    <div class="stat-value" data-stat="total_products"><?php echo number_format($totalProducts); ?></div>
                     <div class="stat-change positive">
                         <i class="fas fa-arrow-up"></i>
                         <span><?php echo $activeProducts; ?> actifs</span>
                     </div>
                 </div>
                 
-                <div class="stat-card">
+                <div class="stat-card success" data-aos="fade-up" data-aos-delay="200" data-tooltip="Commandes reçues au total">
                     <div class="stat-header">
                         <div class="stat-title">Commandes</div>
                         <div class="stat-icon success">
                             <i class="fas fa-shopping-cart"></i>
                         </div>
                     </div>
-                    <div class="stat-value"><?php echo number_format($totalOrders); ?></div>
+                    <div class="stat-value" data-stat="total_orders"><?php echo number_format($totalOrders); ?></div>
                     <div class="stat-change <?php echo $pendingOrders > 0 ? 'negative' : 'positive'; ?>">
                         <i class="fas fa-<?php echo $pendingOrders > 0 ? 'clock' : 'check'; ?>"></i>
                         <span><?php echo $pendingOrders; ?> en attente</span>

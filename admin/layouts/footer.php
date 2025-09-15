@@ -4,6 +4,19 @@
     <!-- Custom Admin JS -->
     <script src="assets/js/admin.js"></script>
     
+    <!-- Enhanced Admin JS -->
+    <script src="assets/js/admin-enhanced.js"></script>
+    
+    <!-- Initialize AOS -->
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100
+        });
+    </script>
+    
     <!-- Système de notifications temps réel -->
     <script>
     // Notifications en temps réel pour l'admin
