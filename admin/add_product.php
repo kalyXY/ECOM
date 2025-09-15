@@ -2,6 +2,50 @@
 require_once 'config.php';
 requireLogin();
 
+// === CORRECTION CSRF ===
+// Forcer le démarrage de session si nécessaire
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Système CSRF corrigé
+class FixedCSRF {
+    public static function generateToken() {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token_time'] = time();
+        return $_SESSION['csrf_token'];
+    }
+    
+    public static function verifyToken($token) {
+        if (empty($token) || empty($_SESSION['csrf_token'])) {
+            return false;
+        }
+        
+        // Vérifier l'expiration (1 heure)
+        if (isset($_SESSION['csrf_token_time']) && (time() - $_SESSION['csrf_token_time'] > 3600)) {
+            unset($_SESSION['csrf_token']);
+            unset($_SESSION['csrf_token_time']);
+            return false;
+        }
+        
+        return hash_equals($_SESSION['csrf_token'], $token);
+    }
+    
+    public static function getToken() {
+        return $_SESSION['csrf_token'] ?? self::generateToken();
+    }
+}
+
+// Fonctions globales corrigées
+function generateCSRFTokenFixed() {
+    return FixedCSRF::generateToken();
+}
+
+function verifyCSRFTokenFixed($token) {
+    return FixedCSRF::verifyToken($token);
+}
+// === FIN CORRECTION CSRF ===
+
 $errors = [];
 $success = '';
 
@@ -37,9 +81,9 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Vérification CSRF
-    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-        $errors[] = 'Token CSRF invalide.';
+    // Vérification CSRF avec système corrigé
+    if (!verifyCSRFTokenFixed($_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Token CSRF invalide. Veuillez actualiser la page et réessayer.';
     } else {
         $name = Security::sanitizeInput($_POST['name'] ?? '');
         $description = Security::sanitizeInput($_POST['description'] ?? '');
