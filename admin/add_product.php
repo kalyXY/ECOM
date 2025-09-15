@@ -140,11 +140,9 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Vérification CSRF ultra-robuste
-    if (!verifyCSRFTokenUltra($_POST['csrf_token'] ?? '')) {
-        $errors[] = 'Token CSRF invalide. Veuillez actualiser la page et réessayer.';
-        error_log('CSRF verification failed for user: ' . ($_SESSION['admin_username'] ?? 'unknown'));
-    } else {
+    // CSRF désactivé à la demande: on bypass la vérification
+    // if (!verifyCSRFTokenUltra($_POST['csrf_token'] ?? '')) { ... }
+    {
         $name = Security::sanitizeInput($_POST['name'] ?? '');
         $description = Security::sanitizeInput($_POST['description'] ?? '');
         $price = Security::sanitizeInput($_POST['price'] ?? '', 'float');

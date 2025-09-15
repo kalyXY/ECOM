@@ -89,10 +89,7 @@ try {
         case 'POST':
             // Créer un nouveau produit (admin seulement)
             requireLogin();
-            
-            if (!Security::verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-                App::jsonResponse(['error' => 'Token CSRF invalide'], 403);
-            }
+            // CSRF désactivé pour POST à la demande
             
             $data = [
                 'name' => Security::sanitizeInput($_POST['name']),
@@ -136,10 +133,7 @@ try {
             }
             
             $input = json_decode(file_get_contents('php://input'), true);
-            
-            if (!Security::verifyCSRFToken($input['csrf_token'] ?? '')) {
-                App::jsonResponse(['error' => 'Token CSRF invalide'], 403);
-            }
+            // CSRF désactivé pour PUT à la demande
             
             $data = [
                 'name' => Security::sanitizeInput($input['name']),
