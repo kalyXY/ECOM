@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 a:2:{s:5:"value";a:0:{}s:7:"expires";i:1758010892;}
+=======
+a:2:{s:5:"value";a:0:{}s:7:"expires";i:1757951690;}
+>>>>>>> 66f96d6 (Update cache expiration timestamps for improved cache management.)
