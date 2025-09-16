@@ -256,8 +256,13 @@ $bodyClass = 'products-page';
                                                 <span class="badge-sale">-<?php echo round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>%</span>
                                             <?php endif; ?>
                                         </div>
-                                        <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist(<?php echo $product['id']; ?>)">
-                                            <i class="far fa-heart"></i>
+                                        <?php
+                                        $inWishlist = isProductInWishlist($product['id']);
+                                        ?>
+                                        <button class="wishlist-btn <?php echo $inWishlist ? 'active' : ''; ?>"
+                                                onclick="event.stopPropagation(); toggleWishlistAjax(<?php echo $product['id']; ?>, this)"
+                                                title="<?php echo $inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
+                                            <i class="<?php echo $inWishlist ? 'fas' : 'far'; ?> fa-heart"></i>
                                         </button>
                                     </div>
                                     <div class="product-info">

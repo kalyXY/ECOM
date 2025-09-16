@@ -212,4 +212,65 @@ function isValidImageUpload($file) {
     $result = Security::validateImageUpload($file);
     return $result['valid'];
 }
+
+/**
+ * Get the number of items in the user's wishlist.
+ *
+ * @return integer
+ */
+function getWishlistItemCount() {
+    if (!isset($GLOBALS['pdo'])) {
+        return 0;
+    }
+    $pdo = $GLOBALS['pdo'];
+
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+
+    try {
+        if ($customerId) {
+            $stmt = $pdo->prepare("SELECT COUNT(DISTINCT product_id) FROM wishlists WHERE customer_id = ?");
+            $stmt->execute([$customerId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT COUNT(DISTINCT product_id) FROM wishlists WHERE session_id = ? AND customer_id IS NULL");
+            $stmt->execute([$sessionId]);
+        }
+        return (int)$stmt->fetchColumn();
+    } catch (PDOException $e) {
+        // This can happen if the table doesn't exist yet.
+        // Log the error but don't break the page.
+        error_log("Could not get wishlist count: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Check if a specific product is in the user's wishlist.
+ *
+ * @param integer $productId
+ * @return boolean
+ */
+function isProductInWishlist($productId) {
+    if (!isset($GLOBALS['pdo']) || empty($productId)) {
+        return false;
+    }
+    $pdo = $GLOBALS['pdo'];
+
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+
+    try {
+        if ($customerId) {
+            $stmt = $pdo->prepare("SELECT 1 FROM wishlists WHERE customer_id = ? AND product_id = ?");
+            $stmt->execute([$customerId, $productId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT 1 FROM wishlists WHERE session_id = ? AND product_id = ? AND customer_id IS NULL");
+            $stmt->execute([$sessionId, $productId]);
+        }
+        return $stmt->fetchColumn() !== false;
+    } catch (PDOException $e) {
+        error_log("Could not check wishlist status for product {$productId}: " . $e->getMessage());
+        return false;
+    }
+}
 ?>
