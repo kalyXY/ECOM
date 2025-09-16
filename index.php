@@ -232,10 +232,16 @@ $pageTitle = 'Accueil';
                             
                             <!-- Boutons d'action -->
                             <div class="mt-2">
-                                <button class="btn-add-to-cart mb-1" 
-                                        onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)">
+                                <form method="POST" action="cart.php" class="d-grid" onClick="event.stopPropagation();">
+                                    <input type="hidden" name="action" value="add">
+                                    <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                    <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn-add-to-cart mb-1">
                                     <i class="fas fa-shopping-cart me-1"></i>Ajouter au panier
                                 </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -285,7 +291,14 @@ $pageTitle = 'Accueil';
                             <?php endif; ?>
                         </div>
                         <div class="mt-2">
-                            <button class="btn-add-to-cart mb-1" onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                            <form method="POST" action="cart.php" class="d-grid" onClick="event.stopPropagation();">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn-add-to-cart mb-1"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                            </form>
                         </div>
                     </div>
                 </div>

@@ -185,18 +185,22 @@ try {
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label for="quantity" class="form-label">Quantité</label>
-                                    <select class="form-select" id="quantity">
+                                    <select class="form-select" id="quantity" name="quantity" form="add-to-cart-form">
                                         <?php for ($i = 1; $i <= min(10, $product['stock'] ?? 10); $i++): ?>
                                             <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
                                         <?php endfor; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-8 d-flex align-items-end">
-                                    <button class="btn btn-primary btn-lg w-100" 
-                                            onclick="event.preventDefault(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['price']; ?>, document.getElementById('quantity').value)"
-                                            <?php echo (isset($product['stock']) && $product['stock'] <= 0) ? 'disabled' : ''; ?>>
-                                        <i class="fas fa-shopping-cart me-2"></i>Ajouter au panier
-                                    </button>
+                                    <form id="add-to-cart-form" method="POST" action="cart.php" class="w-100">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                        <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                        <input type="hidden" name="price" value="<?php echo (float)$product['sale_price'] ?: (float)$product['price']; ?>">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100" <?php echo (isset($product['stock']) && $product['stock'] <= 0) ? 'disabled' : ''; ?>>
+                                            <i class="fas fa-shopping-cart me-2"></i>Ajouter au panier
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
