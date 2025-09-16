@@ -280,10 +280,10 @@ include 'includes/header.php';
               </div>
               
               <div class="d-grid gap-2">
-                <button type="button" class="btn btn-success btn-lg" onclick="proceedToCheckout()">
+                <a href="checkout.php" class="btn btn-success btn-lg">
                   <i class="fas fa-lock me-2"></i>
                   Passer la commande
-                </button>
+                </a>
                 <small class="text-muted text-center">
                   <i class="fas fa-shield-alt me-1"></i>
                   Paiement 100% sécurisé
