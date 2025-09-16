@@ -26,6 +26,7 @@ $cartCount = getCartItemCount();
     
     <!-- Custom CSS -->
     <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/custom-style.css" rel="stylesheet">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
@@ -100,7 +101,7 @@ $cartCount = getCartItemCount();
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
 </head>
-<body>
+<body class="<?php echo $bodyClass ?? ''; ?>">
     <!-- Navigation moderne style Alibaba -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid px-3">

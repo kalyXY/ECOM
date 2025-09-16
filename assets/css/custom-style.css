@@ -1,0 +1,300 @@
+/* Custom Styles for StyleHub */
+
+/* ------------------
+   General Improvements
+   ------------------ */
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+}
+
+/* ------------------
+   Buttons
+   ------------------ */
+
+.btn-fashion {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50px;
+    padding: 0.8rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-fashion:hover {
+    background-color: var(--primary-dark);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-fashion.btn-lg {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+}
+
+/* ------------------
+   Hero Section
+   ------------------ */
+
+.hero-carousel-item {
+    height: 450px;
+    position: relative;
+}
+
+.hero-carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+}
+
+.hero-carousel-caption {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    text-align: center;
+    width: 80%;
+}
+
+.hero-carousel-caption h5 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* ------------------
+   Category Section
+   ------------------ */
+
+.category-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.category-card .card-img-top {
+    height: 220px;
+    object-fit: cover;
+}
+
+/* ------------------
+   Product Card
+   ------------------ */
+
+.product-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info .mt-auto {
+    margin-top: auto;
+}
+
+.product-image-container {
+    height: 250px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ------------------
+   Services Section
+   ------------------ */
+
+.service-item {
+    transition: transform 0.3s ease;
+}
+
+.service-item:hover {
+    transform: translateY(-5px);
+}
+
+/* ------------------
+   Newsletter Section
+   ------------------ */
+
+.newsletter-section {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+/* ------------------
+   Products Page
+   ------------------ */
+
+.filters-sidebar {
+    background-color: #fff;
+    position: sticky;
+    top: 90px;
+}
+
+.filter-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-options .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.color-options .form-check-input {
+    display: none;
+}
+
+.color-options .color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--border-light);
+    transition: all 0.2s ease;
+}
+
+.color-options .form-check-input:checked + .color-swatch {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.size-options .form-check-input {
+    display: none;
+}
+
+.size-options .size-label {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    text-align: center;
+}
+
+.size-options .form-check-input:checked + .size-label {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.products-grid.list-view .product-card {
+    flex-direction: row;
+}
+
+.products-grid.list-view .product-card .product-image-container {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.products-grid.list-view .product-card .product-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+}
+
+/* ------------------
+   Single Product Page
+   ------------------ */
+
+.product-gallery .product-main-image img {
+    height: 500px;
+    object-fit: cover;
+}
+
+.product-thumbnails img {
+    height: 80px;
+    object-fit: cover;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.product-thumbnails img:hover,
+.product-thumbnails img.active {
+    opacity: 1;
+    border-color: var(--primary-color) !important;
+}
+
+.product-details {
+    position: sticky;
+    top: 90px;
+}
+
+.product-detail-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.product-detail-price {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.size-selector .btn-check:checked + .btn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.quantity-selector input {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+}
+
+/* ------------------
+   Cart Page
+   ------------------ */
+
+.cart-item {
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.cart-summary {
+    position: sticky;
+    top: 90px;
+}
