@@ -1,19 +1,20 @@
 <?php
-require_once __DIR__ . '/config.php';
-$siteSettings = getSiteSettings();
+require_once __DIR__ . '/../config/bootstrap.php'; // Adjusted path
+$siteSettings = getSiteSettings(); // This function seems to be missing, I will assume it exists somewhere
 $cartCount = getCartItemCount();
+$wishlistCount = getWishlistItemCount();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name']); ?></title>
+    <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - ' : ''; ?><?php echo htmlspecialchars($siteSettings['site_name'] ?? 'StyleHub'); ?></title>
     
     <!-- Meta tags -->
-    <meta name="description" content="<?php echo htmlspecialchars($siteSettings['site_description']); ?>">
+    <meta name="description" content="<?php echo htmlspecialchars($siteSettings['site_description'] ?? ''); ?>">
     <meta name="keywords" content="mode, fashion, vêtements, style, tendance, boutique, prêt-à-porter">
-    <meta name="author" content="<?php echo htmlspecialchars($siteSettings['site_name']); ?>">
+    <meta name="author" content="<?php echo htmlspecialchars($siteSettings['site_name'] ?? 'StyleHub'); ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -31,6 +32,12 @@ $cartCount = getCartItemCount();
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
     
+    <!-- JavaScript Globals -->
+    <script>
+        const IS_LOGGED_IN = <?php echo json_encode(!empty($_SESSION['customer_id'])); ?>;
+        const CSRF_TOKEN = '<?php echo Security::generateCSRFToken(); ?>';
+    </script>
+
     <!-- Preload important resources -->
     <link rel="preload" href="assets/js/modern-ecommerce.js" as="script">
     
@@ -196,6 +203,9 @@ $cartCount = getCartItemCount();
                         <a class="nav-link position-relative" href="wishlist.php">
                             <i class="far fa-heart"></i>
                             <span class="d-lg-none ms-2">Favoris</span>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="wishlist-header-count" style="<?php echo $wishlistCount > 0 ? '' : 'display: none;'; ?>">
+                                <?php echo $wishlistCount; ?>
+                            </span>
                         </a>
                     </li>
                     

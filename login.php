@@ -32,8 +32,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['customer_id'] = (int)$customer['id'];
                 $_SESSION['customer_email'] = $customer['email'];
 
+                // Store old session ID for wishlist merge
+                $oldSessionId = session_id();
+
                 // Regenerate session ID for security
                 session_regenerate_id(true);
+
+                // Merge session wishlist with user's wishlist
+                $customerId = (int)$customer['id'];
+
+                // Get product IDs from the old session
+                $stmt = $pdo->prepare("SELECT product_id FROM wishlists WHERE session_id = ? AND customer_id IS NULL");
+                $stmt->execute([$oldSessionId]);
+                $sessionProductIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($sessionProductIds)) {
+                    // Get product IDs already in the user's wishlist
+                    $stmt = $pdo->prepare("SELECT product_id FROM wishlists WHERE customer_id = ?");
+                    $stmt->execute([$customerId]);
+                    $userProductIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                    $pdo->beginTransaction();
+                    try {
+                        // Insert only the products that are not already in the user's wishlist
+                        foreach ($sessionProductIds as $productId) {
+                            if (!in_array($productId, $userProductIds)) {
+                                $insertStmt = $pdo->prepare("INSERT INTO wishlists (customer_id, session_id, product_id) VALUES (?, ?, ?)");
+                                // Associate the new session_id with the merged items
+                                $insertStmt->execute([$customerId, session_id(), $productId]);
+                            }
+                        }
+
+                        // Clean up the old session-based wishlist items
+                        $deleteStmt = $pdo->prepare("DELETE FROM wishlists WHERE session_id = ? AND customer_id IS NULL");
+                        $deleteStmt->execute([$oldSessionId]);
+
+                        $pdo->commit();
+                    } catch (Exception $e) {
+                        $pdo->rollBack();
+                        error_log('Wishlist merge failed for customer ' . $customerId . ': ' . $e->getMessage());
+                    }
+                }
 
                 // Redirect to profile page
                 header('Location: profile.php');

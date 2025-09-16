@@ -170,8 +170,14 @@ try {
                             <button type="submit" class="btn btn-primary btn-lg" <?php echo ($product['stock'] <= 0) ? 'disabled' : ''; ?>>
                                 <i class="fas fa-shopping-cart me-2"></i>Ajouter au panier
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-lg wishlist-btn" data-product-id="<?php echo $product['id']; ?>">
-                                <i class="far fa-heart me-2"></i>Ajouter à la wishlist
+                            <?php
+                            $inWishlist = isProductInWishlist($product['id']);
+                            ?>
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-lg wishlist-btn <?php echo $inWishlist ? 'active' : ''; ?>"
+                                    onclick="toggleWishlistAjax(<?php echo $product['id']; ?>, this)"
+                                    title="<?php echo $inWishlist ? 'Retirer de la wishlist' : 'Ajouter à la wishlist'; ?>">
+                                <i class="<?php echo $inWishlist ? 'fas' : 'far'; ?> fa-heart me-2"></i><?php echo $inWishlist ? 'Retirer de la wishlist' : 'Ajouter à la wishlist'; ?>
                             </button>
                         </div>
                     </form>

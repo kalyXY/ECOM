@@ -47,33 +47,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $wishlistItems = getWishlistItems($pdo);
 $wishlistCount = count($wishlistItems);
 
-// Fonctions pour gérer la wishlist
+// --- Fonctions de gestion de la Wishlist (Fallback pour non-JS) ---
+
 function addToWishlist($pdo, $productId) {
-    $sessionId = getOrCreateSessionId();
-    
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+
+    if (!$customerId) {
+        // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+        header('Location: login.php?redirect=wishlist.php');
+        exit;
+    }
+
     try {
-        // Vérifier si le produit existe
-        $stmt = $pdo->prepare("SELECT id, name FROM products WHERE id = ? AND status = 'active'");
-        $stmt->execute([$productId]);
-        $product = $stmt->fetch();
-        
-        if (!$product) {
-            return ['success' => false, 'message' => 'Produit introuvable.'];
-        }
-        
-        // Vérifier si déjà dans la wishlist
-        $stmt = $pdo->prepare("SELECT id FROM wishlists WHERE session_id = ? AND product_id = ?");
-        $stmt->execute([$sessionId, $productId]);
+        // Vérifier si le produit existe déjà dans la liste de l'utilisateur
+        $stmt = $pdo->prepare("SELECT id FROM wishlists WHERE customer_id = ? AND product_id = ?");
+        $stmt->execute([$customerId, $productId]);
         if ($stmt->fetch()) {
             return ['success' => false, 'message' => 'Ce produit est déjà dans vos favoris.'];
         }
-        
+
         // Ajouter à la wishlist
-        $stmt = $pdo->prepare("INSERT INTO wishlists (session_id, product_id, created_at) VALUES (?, ?, NOW())");
-        $stmt->execute([$sessionId, $productId]);
+        $stmt = $pdo->prepare("INSERT INTO wishlists (customer_id, session_id, product_id) VALUES (?, ?, ?)");
+        $stmt->execute([$customerId, $sessionId, $productId]);
         
         return ['success' => true, 'message' => 'Produit ajouté à vos favoris !'];
-        
     } catch (PDOException $e) {
         error_log("Error adding to wishlist: " . $e->getMessage());
         return ['success' => false, 'message' => 'Erreur lors de l\'ajout aux favoris.'];
@@ -81,18 +79,16 @@ function addToWishlist($pdo, $productId) {
 }
 
 function removeFromWishlist($pdo, $productId) {
-    $sessionId = getOrCreateSessionId();
-    
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+    $whereClause = $customerId ? "customer_id = ?" : "session_id = ? AND customer_id IS NULL";
+    $param = $customerId ?? $sessionId;
+
     try {
-        $stmt = $pdo->prepare("DELETE FROM wishlists WHERE session_id = ? AND product_id = ?");
-        $stmt->execute([$sessionId, $productId]);
+        $stmt = $pdo->prepare("DELETE FROM wishlists WHERE {$whereClause} AND product_id = ?");
+        $stmt->execute([$param, $productId]);
         
-        if ($stmt->rowCount() > 0) {
-            return ['success' => true, 'message' => 'Produit retiré de vos favoris.'];
-        } else {
-            return ['success' => false, 'message' => 'Produit non trouvé dans vos favoris.'];
-        }
-        
+        return ['success' => true, 'message' => 'Produit retiré de vos favoris.'];
     } catch (PDOException $e) {
         error_log("Error removing from wishlist: " . $e->getMessage());
         return ['success' => false, 'message' => 'Erreur lors de la suppression.'];
@@ -100,14 +96,16 @@ function removeFromWishlist($pdo, $productId) {
 }
 
 function clearWishlist($pdo) {
-    $sessionId = getOrCreateSessionId();
-    
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+    $whereClause = $customerId ? "customer_id = ?" : "session_id = ? AND customer_id IS NULL";
+    $param = $customerId ?? $sessionId;
+
     try {
-        $stmt = $pdo->prepare("DELETE FROM wishlists WHERE session_id = ?");
-        $stmt->execute([$sessionId]);
+        $stmt = $pdo->prepare("DELETE FROM wishlists WHERE {$whereClause}");
+        $stmt->execute([$param]);
         
         return ['success' => true, 'message' => 'Liste de favoris vidée.'];
-        
     } catch (PDOException $e) {
         error_log("Error clearing wishlist: " . $e->getMessage());
         return ['success' => false, 'message' => 'Erreur lors de la suppression.'];
@@ -115,49 +113,40 @@ function clearWishlist($pdo) {
 }
 
 function getWishlistItems($pdo) {
-    $sessionId = getOrCreateSessionId();
-    
+    $customerId = $_SESSION['customer_id'] ?? null;
+    $sessionId = session_id();
+
+    $sql = "
+        SELECT p.*, w.created_at as added_to_wishlist,
+               CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price
+                    THEN p.sale_price
+                    ELSE p.price
+               END as effective_price,
+               CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price
+                    THEN ROUND(((p.price - p.sale_price) / p.price) * 100)
+                    ELSE 0
+               END as discount_percentage
+        FROM wishlists w
+        JOIN products p ON w.product_id = p.id
+        WHERE p.status = 'active' AND ";
+
+    if ($customerId) {
+        $sql .= "w.customer_id = ?";
+        $params = [$customerId];
+    } else {
+        $sql .= "w.session_id = ? AND w.customer_id IS NULL";
+        $params = [$sessionId];
+    }
+
+    $sql .= " ORDER BY w.created_at DESC";
+
     try {
-        $stmt = $pdo->prepare("
-            SELECT p.*, w.created_at as added_to_wishlist,
-                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price 
-                        THEN p.sale_price 
-                        ELSE p.price 
-                   END as effective_price,
-                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price 
-                        THEN ROUND(((p.price - p.sale_price) / p.price) * 100) 
-                        ELSE 0 
-                   END as discount_percentage
-            FROM wishlists w 
-            JOIN products p ON w.product_id = p.id 
-            WHERE w.session_id = ? AND p.status = 'active'
-            ORDER BY w.created_at DESC
-        ");
-        $stmt->execute([$sessionId]);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
-        
     } catch (PDOException $e) {
         error_log("Error getting wishlist items: " . $e->getMessage());
         return [];
-    }
-}
-
-function getOrCreateSessionId() {
-    if (!isset($_SESSION['wishlist_session_id'])) {
-        $_SESSION['wishlist_session_id'] = bin2hex(random_bytes(16));
-    }
-    return $_SESSION['wishlist_session_id'];
-}
-
-function isInWishlist($pdo, $productId) {
-    $sessionId = getOrCreateSessionId();
-    
-    try {
-        $stmt = $pdo->prepare("SELECT id FROM wishlists WHERE session_id = ? AND product_id = ?");
-        $stmt->execute([$sessionId, $productId]);
-        return $stmt->fetch() !== false;
-    } catch (PDOException $e) {
-        return false;
     }
 }
 ?>
