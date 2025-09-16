@@ -3,9 +3,9 @@ require_once 'includes/config.php';
 
 // Must be logged in as customer to place order
 if (empty($_SESSION['customer_id'])) {
-    $_SESSION['message'] = 'Veuillez vous connecter pour passer commande.';
+    $_SESSION['message'] = 'Vous devez être connecté pour passer une commande. Veuillez vous connecter ou créer un compte.';
     $_SESSION['message_type'] = 'warning';
-    header('Location: profile.php');
+    header('Location: login.php');
     exit;
 }
 

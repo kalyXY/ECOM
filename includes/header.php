@@ -215,17 +215,30 @@ $cartCount = getCartItemCount();
                     
                     <!-- Compte -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user"></i>
                             <span class="d-lg-none ms-2">Mon Compte</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                            <li><a class="dropdown-item" href="profile.php">
-                                <i class="fas fa-user me-2"></i>Mon Profil
-                            </a></li>
-                            <li><a class="dropdown-item" href="orders.php">
-                                <i class="fas fa-box me-2"></i>Mes Commandes
-                            </a></li>
+                            <?php if (!empty($_SESSION['customer_id'])): ?>
+                                <li><a class="dropdown-item" href="profile.php">
+                                    <i class="fas fa-user-circle me-2"></i>Mon Profil
+                                </a></li>
+                                <li><a class="dropdown-item" href="orders.php">
+                                    <i class="fas fa-box me-2"></i>Mes Commandes
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Se déconnecter
+                                </a></li>
+                            <?php else: ?>
+                                <li><a class="dropdown-item" href="login.php">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                                </a></li>
+                                <li><a class="dropdown-item" href="register.php">
+                                    <i class="fas fa-user-plus me-2"></i>Créer un compte
+                                </a></li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="admin/login.php">
                                 <i class="fas fa-user-shield me-2"></i>Administration
