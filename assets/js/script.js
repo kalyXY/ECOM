@@ -643,6 +643,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Animation au scroll pour les éléments de la page d'accueil
+document.addEventListener('DOMContentLoaded', function() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.product-card, .category-card, .service-item').forEach(item => {
+        observer.observe(item);
+    });
+});
+
 // Fonction pour le mode sombre (optionnel)
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
@@ -653,3 +673,82 @@ function toggleDarkMode() {
 if (localStorage.getItem('dark-mode') === 'true') {
     document.body.classList.add('dark-mode');
 }
+
+// Gestion des filtres en temps réel pour la page produits
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.body.classList.contains('products-page')) {
+        const filterInputs = document.querySelectorAll('.product-filter');
+        const sortSelect = document.getElementById('sortSelect');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        const priceInputs = document.querySelectorAll('input[name="min_price"], input[name="max_price"]');
+
+        function applyFilters() {
+            const form = document.getElementById('filtersForm');
+            const formData = new FormData(form);
+
+            if (sortSelect) {
+                formData.set('sort', sortSelect.value);
+            }
+
+            const params = new URLSearchParams();
+            for (let [key, value] of formData.entries()) {
+                if (value && value.trim() !== '') {
+                    params.append(key, value);
+                }
+            }
+
+            const searchParam = new URLSearchParams(window.location.search).get('search');
+            if (searchParam) {
+                params.set('search', searchParam);
+            }
+
+            window.location.href = 'products.php' + (params.toString() ? '?' + params.toString() : '');
+        }
+
+        function clearAllFilters() {
+            const searchParam = new URLSearchParams(window.location.search).get('search');
+            const newUrl = searchParam ? `products.php?search=${encodeURIComponent(searchParam)}` : 'products.php';
+            window.location.href = newUrl;
+        }
+
+        filterInputs.forEach(input => {
+            input.addEventListener('change', applyFilters);
+        });
+
+        priceInputs.forEach(input => {
+            input.addEventListener('input', debounce(applyFilters, 500));
+        });
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', applyFilters);
+        }
+
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', clearAllFilters);
+        }
+
+        // Gestion de l'affichage grille/liste
+        document.querySelectorAll('[data-view]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const view = this.dataset.view;
+                const grid = document.getElementById('productsGrid');
+
+                document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                if (view === 'list') {
+                    grid.classList.add('list-view');
+                    localStorage.setItem('products_view', 'list');
+                } else {
+                    grid.classList.remove('list-view');
+                    localStorage.setItem('products_view', 'grid');
+                }
+            });
+        });
+
+        const savedView = localStorage.getItem('products_view');
+        if (savedView === 'list') {
+            document.querySelector('[data-view="list"]').click();
+        }
+    }
+});

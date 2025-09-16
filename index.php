@@ -47,66 +47,67 @@ $pageTitle = 'Accueil';
 
 <?php include 'includes/header.php'; ?>
 
-<!-- Hero Section moderne avec carrousel DB (catégories/produits) -->
-<section class="hero-modern">
-    <div class="container-fluid p-0">
-        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                <?php
-                $slides = [];
-                foreach ($categories as $cat) {
-                    if (!empty($cat['image_url'])) {
-                        $slides[] = [
-                            'image' => $cat['image_url'],
-                            'title' => $cat['name'],
-                            'link' => 'products.php?category=' . urlencode($cat['slug'])
-                        ];
-                    }
+<!-- Hero Section moderne avec carrousel DB -->
+<section class="hero-modern p-0">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <?php
+            $slides = [];
+            foreach ($categories as $cat) {
+                if (!empty($cat['image_url'])) {
+                    $slides[] = [
+                        'image' => $cat['image_url'],
+                        'title' => $cat['name'],
+                        'link' => 'products.php?category=' . urlencode($cat['slug'])
+                    ];
                 }
-                foreach ($featuredProducts as $fp) {
-                    if (!empty($fp['image_url'])) {
-                        $slides[] = [
-                            'image' => $fp['image_url'],
-                            'title' => $fp['name'],
-                            'link' => 'product.php?id=' . (int)$fp['id']
-                        ];
-                    }
+            }
+            foreach ($featuredProducts as $fp) {
+                if (!empty($fp['image_url'])) {
+                    $slides[] = [
+                        'image' => $fp['image_url'],
+                        'title' => $fp['name'],
+                        'link' => 'product.php?id=' . (int)$fp['id']
+                    ];
                 }
-                $slides = array_slice($slides, 0, 5);
-                if (empty($slides)) {
-                    echo '<div class="carousel-item active"><div class="bg-light d-flex align-items-center justify-content-center" style="height:420px;"><i class="fas fa-image fa-4x text-muted"></i></div></div>';
-                } else {
-                    foreach ($slides as $i => $s) {
-                        $active = $i === 0 ? 'active' : '';
-                        echo '<div class="carousel-item ' . $active . '">';
-                        echo '<a href="' . htmlspecialchars($s['link']) . '">';
-                        echo '<img src="' . htmlspecialchars($s['image']) . '" class="d-block w-100" alt="' . htmlspecialchars($s['title']) . '" style="max-height:420px; object-fit:cover;">';
-                        echo '</a>';
-                        echo '</div>';
-                    }
+            }
+            $slides = array_slice($slides, 0, 5);
+            if (empty($slides)) {
+                echo '<div class="carousel-item active hero-carousel-item"><div class="bg-light d-flex align-items-center justify-content-center h-100"><i class="fas fa-image fa-4x text-muted"></i></div></div>';
+            } else {
+                foreach ($slides as $i => $s) {
+                    $active = $i === 0 ? 'active' : '';
+                    echo '<div class="carousel-item ' . $active . ' hero-carousel-item">';
+                    echo '<a href="' . htmlspecialchars($s['link']) . '">';
+                    echo '<img src="' . htmlspecialchars($s['image']) . '" class="d-block w-100" alt="' . htmlspecialchars($s['title']) . '">';
+                    echo '</a>';
+                    echo '<div class="hero-carousel-caption d-none d-md-block">';
+                    echo '<h5>' . htmlspecialchars($s['title']) . '</h5>';
+                    echo '</div>';
+                    echo '</div>';
                 }
-                ?>
-            </div>
-            <?php if (!empty($slides) && count($slides) > 1): ?>
-            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Précédent</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Suivant</span>
-            </button>
-            <?php endif; ?>
+            }
+            ?>
         </div>
+        <?php if (!empty($slides) && count($slides) > 1): ?>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Précédent</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Suivant</span>
+        </button>
+        <?php endif; ?>
     </div>
 </section>
 
 <!-- Barre de catégories rapides -->
-<section class="quick-categories py-3 bg-light">
+<section class="quick-categories py-4 bg-light">
     <div class="container">
         <div class="row text-center">
             <?php foreach (array_slice($categories, 0, 4) as $cat): ?>
-            <div class="col-6 col-md-3 mb-2">
+            <div class="col-6 col-md-3 mb-2 mb-md-0">
                 <a href="products.php?category=<?php echo urlencode($cat['slug']); ?>" class="category-quick-link">
                     <i class="fas fa-tags fa-2x text-primary mb-2"></i>
                     <div><?php echo htmlspecialchars($cat['name']); ?></div>
@@ -119,12 +120,11 @@ $pageTitle = 'Accueil';
 
 <!-- Categories Section -->
 <?php if (!empty($categories)): ?>
-<section class="py-5">
+<section>
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fashion-title mb-3">Nos Collections</h2>
-            <div class="fashion-divider"></div>
-            <p class="text-muted">Explorez nos différentes gammes de produits mode</p>
+        <div class="text-center">
+            <h2 class="section-title">Nos Collections</h2>
+            <p class="section-subtitle">Explorez nos différentes gammes de produits mode</p>
         </div>
         
         <div class="row g-4">
@@ -133,10 +133,10 @@ $pageTitle = 'Accueil';
                     <div class="card category-card h-100 border-0 shadow-sm">
                         <?php if ($category['image_url'] && file_exists($category['image_url'])): ?>
                             <img src="<?php echo htmlspecialchars($category['image_url']); ?>" 
-                                 class="card-img-top" style="height: 200px; object-fit: cover;" 
+                                 class="card-img-top"
                                  alt="<?php echo htmlspecialchars($category['name']); ?>">
                         <?php else: ?>
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 220px;">
                                 <i class="fas fa-tshirt fa-3x text-muted"></i>
                             </div>
                         <?php endif; ?>
@@ -144,7 +144,7 @@ $pageTitle = 'Accueil';
                         <div class="card-body text-center">
                             <h5 class="card-title fashion-title"><?php echo htmlspecialchars($category['name']); ?></h5>
                             <p class="card-text text-muted"><?php echo htmlspecialchars($category['description'] ?? 'Découvrez notre sélection'); ?></p>
-                            <a href="products.php?category=<?php echo urlencode($category['slug']); ?>" class="btn btn-outline-primary">
+                            <a href="products.php?category=<?php echo urlencode($category['slug']); ?>" class="btn btn-outline-primary mt-auto">
                                 <i class="fas fa-eye me-1"></i>Voir la Collection
                             </a>
                         </div>
@@ -158,17 +158,16 @@ $pageTitle = 'Accueil';
 
 <!-- Featured Products Section -->
 <?php if (!empty($featuredProducts)): ?>
-<section class="py-5 bg-light">
+<section class="bg-light">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fashion-title mb-3">Coups de Cœur</h2>
-            <div class="fashion-divider"></div>
-            <p class="text-muted">Nos pièces favorites sélectionnées avec soin</p>
+        <div class="text-center">
+            <h2 class="section-title">Coups de Cœur</h2>
+            <p class="section-subtitle">Nos pièces favorites sélectionnées avec soin</p>
         </div>
         
         <div class="row g-3">
             <?php foreach ($featuredProducts as $product): ?>
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-6 col-md-4 col-lg-3 d-flex">
                     <div class="product-card" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
                         <!-- Badges -->
                         <div class="product-badge">
@@ -193,7 +192,7 @@ $pageTitle = 'Accueil';
                                      class="product-image" 
                                      alt="<?php echo htmlspecialchars($product['name']); ?>">
                             <?php else: ?>
-                                <div class="product-image d-flex align-items-center justify-content-center">
+                                <div class="product-image d-flex align-items-center justify-content-center bg-light">
                                     <i class="fas fa-tshirt fa-3x text-muted"></i>
                                 </div>
                             <?php endif; ?>
@@ -213,8 +212,6 @@ $pageTitle = 'Accueil';
                                 <?php endif; ?>
                             </div>
                             
-                            <!-- Métadonnées (afficher seulement si système d'avis est présent) -->
-                            
                             <!-- Tags -->
                             <div class="product-tags">
                                 <?php if ($product['brand']): ?>
@@ -231,7 +228,7 @@ $pageTitle = 'Accueil';
                             </div>
                             
                             <!-- Boutons d'action -->
-                            <div class="mt-2">
+                            <div class="mt-auto">
                                 <form method="POST" action="cart.php" class="d-grid" onClick="event.stopPropagation();">
                                     <input type="hidden" name="action" value="add">
                                     <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
@@ -354,16 +351,16 @@ $pageTitle = 'Accueil';
 <?php endif; ?>
 
 <!-- Newsletter Section -->
-<section class="py-5 bg-dark text-white">
+<section class="newsletter-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
+            <div class="col-lg-6 text-center text-lg-start">
                 <h3 class="fashion-title mb-3">Restez à la Mode</h3>
-                <p class="mb-0">Inscrivez-vous à notre newsletter pour recevoir nos dernières tendances et offres exclusives.</p>
+                <p>Inscrivez-vous à notre newsletter pour recevoir nos dernières tendances et offres exclusives.</p>
             </div>
             <div class="col-lg-6">
                 <form class="d-flex gap-2 mt-3 mt-lg-0">
-                    <input type="email" class="form-control" placeholder="Votre adresse email" required>
+                    <input type="email" class="form-control form-control-lg" placeholder="Votre adresse email" required>
                     <button type="submit" class="btn btn-fashion">
                         <i class="fas fa-paper-plane me-1"></i>S'inscrire
                     </button>
@@ -374,31 +371,31 @@ $pageTitle = 'Accueil';
 </section>
 
 <!-- Services Section -->
-<section class="py-5">
+<section>
     <div class="container">
         <div class="row text-center">
-            <div class="col-md-3 mb-4">
+            <div class="col-md-3 mb-4 mb-md-0">
                 <div class="service-item">
                     <i class="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
                     <h5>Livraison Rapide</h5>
-                    <p class="text-muted">Livraison gratuite dès 50€ d'achat</p>
+                    <p class="text-muted">Livraison gratuite dès 50€</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
+            <div class="col-md-3 mb-4 mb-md-0">
                 <div class="service-item">
                     <i class="fas fa-undo fa-3x text-primary mb-3"></i>
                     <h5>Retours Gratuits</h5>
                     <p class="text-muted">30 jours pour changer d'avis</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
+            <div class="col-md-3 mb-4 mb-md-0">
                 <div class="service-item">
                     <i class="fas fa-headset fa-3x text-primary mb-3"></i>
                     <h5>Service Client</h5>
                     <p class="text-muted">Équipe dédiée à votre écoute</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
+            <div class="col-md-3">
                 <div class="service-item">
                     <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
                     <h5>Paiement Sécurisé</h5>
@@ -410,45 +407,3 @@ $pageTitle = 'Accueil';
 </section>
 
 <?php include 'includes/footer.php'; ?>
-
-<script>
-// Fonction pour gérer la wishlist
-function toggleWishlist(productId) {
-    const button = event.target.closest('.wishlist-btn');
-    const icon = button.querySelector('i');
-    
-    if (icon.classList.contains('far')) {
-        icon.classList.remove('far');
-        icon.classList.add('fas');
-        button.classList.add('active');
-        showToast('Produit ajouté aux favoris', 'success');
-    } else {
-        icon.classList.remove('fas');
-        icon.classList.add('far');
-        button.classList.remove('active');
-        showToast('Produit retiré des favoris', 'info');
-    }
-    
-    // Ici vous pouvez ajouter la logique pour sauvegarder en base de données
-}
-
-// Animation au scroll
-document.addEventListener('DOMContentLoaded', function() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-up');
-            }
-        });
-    }, observerOptions);
-    
-    document.querySelectorAll('.product-card, .category-card, .service-item').forEach(item => {
-        observer.observe(item);
-    });
-});
-</script>
