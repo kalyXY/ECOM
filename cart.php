@@ -17,13 +17,14 @@ if ($action === 'add') {
   $id = (int)($_POST['id'] ?? 0);
   $name = trim($_POST['name'] ?? '');
   $price = (float)($_POST['price'] ?? 0);
+  $qty = max(1, (int)($_POST['quantity'] ?? 1));
   if ($id > 0 && $name !== '' && $price > 0) {
     if (!isset($_SESSION['cart'][$id])) {
-      $_SESSION['cart'][$id] = ['name' => $name, 'price' => $price, 'qty' => 1];
+      $_SESSION['cart'][$id] = ['name' => $name, 'price' => $price, 'qty' => $qty];
       $message = 'Produit ajouté au panier avec succès !';
       $messageType = 'success';
     } else {
-      $_SESSION['cart'][$id]['qty']++;
+      $_SESSION['cart'][$id]['qty'] += $qty;
       $message = 'Quantité mise à jour dans le panier !';
       $messageType = 'info';
     }

@@ -193,7 +193,7 @@ try {
                                 </div>
                                 <div class="col-md-8 d-flex align-items-end">
                                     <button class="btn btn-primary btn-lg w-100" 
-                                            onclick="addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['price']; ?>, document.getElementById('quantity').value)"
+                                            onclick="event.preventDefault(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['price']; ?>, document.getElementById('quantity').value)"
                                             <?php echo (isset($product['stock']) && $product['stock'] <= 0) ? 'disabled' : ''; ?>>
                                         <i class="fas fa-shopping-cart me-2"></i>Ajouter au panier
                                     </button>
