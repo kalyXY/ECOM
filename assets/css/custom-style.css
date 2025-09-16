@@ -1,3 +1,59 @@
+/* Wishlist button styling on product detail page */
+.product-info .wishlist-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid #e6e6e6;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #dc3545;
+    transition: all .2s ease-in-out;
+}
+
+.product-info .wishlist-btn i {
+    color: #dc3545;
+}
+
+.product-info .wishlist-btn:hover {
+    background: #fff5f6;
+    border-color: #f5c2c7;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.12);
+    transform: translateY(-1px);
+}
+
+.product-info .wishlist-btn.active,
+.product-info .wishlist-btn:active {
+    background: #dc3545;
+    color: #ffffff;
+    border-color: #dc3545;
+}
+
+.product-info .wishlist-btn.active i,
+.product-info .wishlist-btn:active i {
+    color: #ffffff;
+}
+
+/* Icon-only wishlist button near title */
+.product-details .wishlist-btn.icon-only {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e6e6e6;
+    background: #fff;
+    color: #dc3545;
+}
+.product-details .wishlist-btn.icon-only:hover { background:#fff5f6; border-color:#f5c2c7; }
+.product-details .wishlist-btn.icon-only i { color:#dc3545; }
+
+/* Ensure product image area looks clean */
+.product-image-container, #productCarousel .carousel-inner {
+    background: #ffffff;
+    border-radius: 8px;
+}
 /* Custom Styles for StyleHub */
 
 /* ------------------

@@ -27,6 +27,7 @@ $cartCount = getCartItemCount();
     <!-- Custom CSS -->
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/custom-style.css" rel="stylesheet">
+    <link href="assets/css/custom-style.css" rel="stylesheet">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">

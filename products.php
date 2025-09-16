@@ -269,9 +269,16 @@ $bodyClass = 'products-page';
                                             <?php endif; ?>
                                         </div>
                                         <div class="mt-auto">
-                                            <button class="btn btn-primary w-100" onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)">
+                                            <form method="POST" action="cart.php" onClick="event.stopPropagation();">
+                                                <input type="hidden" name="action" value="add">
+                                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                                <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-primary w-100">
                                                 Ajouter au panier
                                             </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

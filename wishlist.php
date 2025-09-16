@@ -118,22 +118,22 @@ function getWishlistItems($pdo) {
     $sessionId = getOrCreateSessionId();
     
     try {
-        $stmt = $pdo->prepare("
-            SELECT p.*, w.created_at as added_to_wishlist,
-                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price 
-                        THEN p.sale_price 
-                        ELSE p.price 
-                   END as effective_price,
-                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price 
-                        THEN ROUND(((p.price - p.sale_price) / p.price) * 100) 
-                        ELSE 0 
-                   END as discount_percentage
-            FROM wishlists w 
-            JOIN products p ON w.product_id = p.id 
-            WHERE w.session_id = ? AND p.status = 'active'
-            ORDER BY w.created_at DESC
+        $stmt = $pdo->prepare("\
+            SELECT p.*, w.created_at as added_to_wishlist,\
+                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price \
+                        THEN p.sale_price \
+                        ELSE p.price \
+                   END as effective_price,\
+                   CASE WHEN p.sale_price IS NOT NULL AND p.sale_price < p.price \
+                        THEN ROUND(((p.price - p.sale_price) / p.price) * 100) \
+                        ELSE 0 \
+                   END as discount_percentage\
+            FROM wishlists w \
+            JOIN products p ON w.product_id = p.id \
+            WHERE (w.customer_id = :cid OR w.session_id = :sid) AND p.status = 'active'\
+            ORDER BY w.created_at DESC\
         ");
-        $stmt->execute([$sessionId]);
+        $stmt->execute([':cid' => ($_SESSION['customer_id'] ?? 0), ':sid' => $sessionId]);
         return $stmt->fetchAll();
         
     } catch (PDOException $e) {
@@ -151,10 +151,10 @@ function getOrCreateSessionId() {
 
 function isInWishlist($pdo, $productId) {
     $sessionId = getOrCreateSessionId();
-    
+    $customerId = (int)($_SESSION['customer_id'] ?? 0);
     try {
-        $stmt = $pdo->prepare("SELECT id FROM wishlists WHERE session_id = ? AND product_id = ?");
-        $stmt->execute([$sessionId, $productId]);
+        $stmt = $pdo->prepare("SELECT id FROM wishlists WHERE (customer_id = :cid OR session_id = :sid) AND product_id = :pid");
+        $stmt->execute([':cid' => $customerId, ':sid' => $sessionId, ':pid' => $productId]);
         return $stmt->fetch() !== false;
     } catch (PDOException $e) {
         return false;

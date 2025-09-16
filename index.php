@@ -49,56 +49,56 @@ $pageTitle = 'Accueil';
 
 <!-- Hero Section moderne avec carrousel DB -->
 <section class="hero-modern p-0">
-    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            <?php
-            $slides = [];
-            foreach ($categories as $cat) {
-                if (!empty($cat['image_url'])) {
-                    $slides[] = [
-                        'image' => $cat['image_url'],
-                        'title' => $cat['name'],
-                        'link' => 'products.php?category=' . urlencode($cat['slug'])
-                    ];
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <?php
+                $slides = [];
+                foreach ($categories as $cat) {
+                    if (!empty($cat['image_url'])) {
+                        $slides[] = [
+                            'image' => $cat['image_url'],
+                            'title' => $cat['name'],
+                            'link' => 'products.php?category=' . urlencode($cat['slug'])
+                        ];
+                    }
                 }
-            }
-            foreach ($featuredProducts as $fp) {
-                if (!empty($fp['image_url'])) {
-                    $slides[] = [
-                        'image' => $fp['image_url'],
-                        'title' => $fp['name'],
-                        'link' => 'product.php?id=' . (int)$fp['id']
-                    ];
+                foreach ($featuredProducts as $fp) {
+                    if (!empty($fp['image_url'])) {
+                        $slides[] = [
+                            'image' => $fp['image_url'],
+                            'title' => $fp['name'],
+                            'link' => 'product.php?id=' . (int)$fp['id']
+                        ];
+                    }
                 }
-            }
-            $slides = array_slice($slides, 0, 5);
-            if (empty($slides)) {
+                $slides = array_slice($slides, 0, 5);
+                if (empty($slides)) {
                 echo '<div class="carousel-item active hero-carousel-item"><div class="bg-light d-flex align-items-center justify-content-center h-100"><i class="fas fa-image fa-4x text-muted"></i></div></div>';
-            } else {
-                foreach ($slides as $i => $s) {
-                    $active = $i === 0 ? 'active' : '';
+                } else {
+                    foreach ($slides as $i => $s) {
+                        $active = $i === 0 ? 'active' : '';
                     echo '<div class="carousel-item ' . $active . ' hero-carousel-item">';
-                    echo '<a href="' . htmlspecialchars($s['link']) . '">';
+                        echo '<a href="' . htmlspecialchars($s['link']) . '">';
                     echo '<img src="' . htmlspecialchars($s['image']) . '" class="d-block w-100" alt="' . htmlspecialchars($s['title']) . '">';
-                    echo '</a>';
+                        echo '</a>';
                     echo '<div class="hero-carousel-caption d-none d-md-block">';
                     echo '<h5>' . htmlspecialchars($s['title']) . '</h5>';
                     echo '</div>';
-                    echo '</div>';
+                        echo '</div>';
+                    }
                 }
-            }
-            ?>
-        </div>
-        <?php if (!empty($slides) && count($slides) > 1): ?>
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Précédent</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Suivant</span>
-        </button>
-        <?php endif; ?>
+                ?>
+            </div>
+            <?php if (!empty($slides) && count($slides) > 1): ?>
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Précédent</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Suivant</span>
+            </button>
+            <?php endif; ?>
     </div>
 </section>
 
@@ -339,7 +339,14 @@ $pageTitle = 'Accueil';
                             <?php endif; ?>
                         </div>
                         <div class="mt-2">
-                            <button class="btn-add-to-cart mb-1" onclick="event.stopPropagation(); addToCart(<?php echo $product['id']; ?>, '<?php echo addslashes($product['name']); ?>', <?php echo $product['sale_price'] ?: $product['price']; ?>)"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                            <form method="POST" action="cart.php" onClick="event.stopPropagation();">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-shopping-cart me-1"></i>Ajouter au panier</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -407,3 +414,4 @@ $pageTitle = 'Accueil';
 </section>
 
 <?php include 'includes/footer.php'; ?>
+

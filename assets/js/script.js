@@ -2,36 +2,37 @@
 
 // Fonction pour ajouter/retirer des favoris
 function addToWishlist(productId) {
-    // Créer le formulaire pour l'envoi
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'wishlist.php';
-    form.style.display = 'none';
-    
-    // Token CSRF
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'csrf_token';
-    csrfInput.value = getCSRFToken();
-    form.appendChild(csrfInput);
-    
-    // Action
-    const actionInput = document.createElement('input');
-    actionInput.type = 'hidden';
-    actionInput.name = 'action';
-    actionInput.value = 'add';
-    form.appendChild(actionInput);
-    
-    // ID du produit
-    const productInput = document.createElement('input');
-    productInput.type = 'hidden';
-    productInput.name = 'product_id';
-    productInput.value = productId;
-    form.appendChild(productInput);
-    
-    // Ajouter au DOM et soumettre
-    document.body.appendChild(form);
-    form.submit();
+    // API basée sur la session client (doit être connecté)
+    fetch('api/wishlist.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'toggle', product_id: productId })
+    }).then(async (res) => {
+        if (res.status === 401) {
+            // Non connecté -> rediriger vers profil (connexion)
+            window.location.href = 'profile.php';
+            return null;
+        }
+        return res.json();
+    }).then((data) => {
+        if (!data) return;
+        if (data.success) {
+            // Bascule de l'icône cœur si bouton présent
+            const btn = document.querySelector(`.wishlist-btn[data-product-id="${productId}"]`) || event?.target?.closest('.wishlist-btn');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (data.in_wishlist) {
+                    btn.classList.add('active');
+                    if (icon) { icon.classList.remove('far'); icon.classList.add('fas'); }
+                } else {
+                    btn.classList.remove('active');
+                    if (icon) { icon.classList.remove('fas'); icon.classList.add('far'); }
+                }
+            }
+        } else {
+            showToast('Action favoris impossible', 'warning');
+        }
+    }).catch(() => showToast('Erreur réseau', 'error'));
 }
 
 function removeFromWishlist(productId) {
