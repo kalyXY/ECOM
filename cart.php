@@ -113,6 +113,28 @@ include 'includes/header.php';
         <?php endif; ?>
     </div>
 
+    <!-- BOUTON DE COMMANDE PRINCIPAL - TOUJOURS VISIBLE SI PANIER NON VIDE -->
+    <?php if (!empty($items)): ?>
+    <div class="emergency-checkout-btn mb-4">
+        <div class="alert alert-success p-4 text-center">
+            <h3 class="mb-3">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Votre panier : <?php echo number_format($total, 2, ',', ' '); ?> €
+            </h3>
+            <a href="checkout.php" class="btn btn-success btn-lg px-5 py-3" style="font-size: 1.2rem; font-weight: bold;">
+                <i class="fas fa-credit-card me-2"></i>
+                🛒 PASSER LA COMMANDE MAINTENANT 🛒
+            </a>
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-lock me-1"></i>
+                    Paiement 100% sécurisé avec Lygos
+                </small>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- En-tête du panier -->
     <div class="cart-header text-center mb-5">
         <h1 class="section-title">
@@ -284,7 +306,10 @@ include 'includes/header.php';
                         <!-- Liste des articles -->
                         <form method="POST" action="?action=update" id="cartUpdateForm">
                             <div class="cart-items">
-                                <?php foreach ($items as $index => $id): $item = $items[$id]; ?>
+                                <?php 
+                                $index = 0;
+                                foreach ($items as $id => $item): 
+                                ?>
                                     <div class="cart-item animate-fade-in-up" style="animation-delay: <?php echo $index * 0.1; ?>s;">
                                         <div class="cart-item-content">
                                             <!-- Image du produit -->
@@ -363,7 +388,10 @@ include 'includes/header.php';
                                             </div>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
+                                <?php 
+                                $index++;
+                                endforeach; 
+                                ?>
                             </div>
                         </form>
                         
@@ -550,8 +578,33 @@ include 'includes/header.php';
         </div>
     <?php endif; ?>
     
-    <!-- Bouton flottant pour mobile (seulement si panier non vide) -->
+    <!-- BOUTON DE COMMANDE EN BAS DE PAGE - TRÈS VISIBLE -->
     <?php if (!empty($items)): ?>
+    <div class="final-checkout-section py-5 bg-success text-white text-center">
+        <div class="container">
+            <h2 class="mb-3">
+                <i class="fas fa-check-circle me-2"></i>
+                Prêt à finaliser votre commande ?
+            </h2>
+            <p class="lead mb-4">
+                Total : <strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong> 
+                (<?php echo $itemCount; ?> article<?php echo $itemCount > 1 ? 's' : ''; ?>)
+            </p>
+            <a href="checkout.php" class="btn btn-warning btn-lg px-5 py-3" style="font-size: 1.3rem; font-weight: bold; color: #000;">
+                <i class="fas fa-arrow-right me-2"></i>
+                FINALISER MA COMMANDE
+                <i class="fas fa-arrow-left ms-2"></i>
+            </a>
+            <div class="mt-3">
+                <small>
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Paiement sécurisé • Livraison gratuite • Retours gratuits
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bouton flottant pour mobile (seulement si panier non vide) -->
     <div class="floating-checkout-btn d-lg-none">
         <a href="checkout.php" class="btn btn-success btn-lg shadow-lg">
             <i class="fas fa-shopping-cart me-2"></i>
