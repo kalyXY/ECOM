@@ -80,6 +80,9 @@ foreach ($items as $id => $item) {
   $itemCount += $item['qty'];
 }
 
+// Debug : Afficher l'état du panier
+error_log("Cart Debug - Items: " . count($items) . ", Total: $total, ItemCount: $itemCount");
+
 // Inclure le header du site
 include 'includes/header.php';
 ?>
@@ -97,6 +100,19 @@ include 'includes/header.php';
 </div>
 
 <div class="container py-5">
+    <!-- Debug info (à supprimer en production) -->
+    <div class="alert alert-info mb-4">
+        <strong>État du panier :</strong> 
+        <?php echo count($items); ?> article(s) - 
+        Total: <?php echo number_format($total, 2, ',', ' '); ?> € - 
+        Quantité: <?php echo $itemCount; ?>
+        <?php if (!empty($items)): ?>
+            <br><strong>✅ Le bouton "Passer la commande" devrait être visible ci-dessous</strong>
+        <?php else: ?>
+            <br><strong>ℹ️ Ajoutez un produit pour voir le bouton de commande</strong>
+        <?php endif; ?>
+    </div>
+
     <!-- En-tête du panier -->
     <div class="cart-header text-center mb-5">
         <h1 class="section-title">
@@ -216,6 +232,24 @@ include 'includes/header.php';
                                         <i class="fas fa-tags fa-2x text-danger mb-2"></i>
                                         <div>Promotions</div>
                                     </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Bouton de test pour ajouter un produit -->
+                            <div class="row mt-4">
+                                <div class="col-12 text-center">
+                                    <p class="text-muted mb-3">Ou testez le panier avec un produit d'exemple :</p>
+                                    <form method="POST" action="cart.php" style="display: inline-block;">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="id" value="999">
+                                        <input type="hidden" name="name" value="T-shirt Test">
+                                        <input type="hidden" name="price" value="29.99">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-outline-success">
+                                            <i class="fas fa-plus me-2"></i>
+                                            Ajouter un produit test
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -354,6 +388,27 @@ include 'includes/header.php';
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Bouton de commande principal (mobile) -->
+                            <div class="row mt-4 d-lg-none">
+                                <div class="col-12">
+                                    <div class="mobile-checkout-summary bg-light p-3 rounded mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-bold">Total</span>
+                                            <span class="h5 text-primary mb-0"><?php echo number_format($total, 2, ',', ' '); ?> €</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-truck me-1"></i>
+                                            Livraison gratuite incluse
+                                        </div>
+                                    </div>
+                                    <a href="checkout.php" class="btn btn-success btn-lg w-100 checkout-btn-mobile">
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        <strong>PASSER LA COMMANDE</strong>
+                                        <div class="small mt-1">Paiement sécurisé</div>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -422,11 +477,22 @@ include 'includes/header.php';
                                 
                                 <!-- Boutons d'action -->
                                 <div class="summary-actions">
-                                    <a href="checkout.php" class="btn btn-primary btn-lg w-100 mb-3 checkout-btn">
-                                        <i class="fas fa-lock me-2"></i>
-                                        Passer la commande
-                                        <small class="d-block mt-1">Paiement sécurisé</small>
+                                    <a href="checkout.php" class="btn btn-success btn-lg w-100 mb-3 checkout-btn pulse-animation">
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        <strong>PASSER LA COMMANDE</strong>
+                                        <small class="d-block mt-1">
+                                            <i class="fas fa-lock me-1"></i>
+                                            Paiement 100% sécurisé
+                                        </small>
                                     </a>
+                                    
+                                    <!-- Bouton alternatif plus discret -->
+                                    <div class="text-center mb-3">
+                                        <small class="text-muted">
+                                            Ou continuez vos achats et
+                                            <a href="products.php" class="text-decoration-none">découvrez plus de produits</a>
+                                        </small>
+                                    </div>
                                     
                                     <!-- Options de paiement -->
                                     <div class="payment-options">
@@ -482,6 +548,16 @@ include 'includes/header.php';
                 </div>
             </div>
         </div>
+    <?php endif; ?>
+    
+    <!-- Bouton flottant pour mobile (seulement si panier non vide) -->
+    <?php if (!empty($items)): ?>
+    <div class="floating-checkout-btn d-lg-none">
+        <a href="checkout.php" class="btn btn-success btn-lg shadow-lg">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <strong>Commander (<?php echo number_format($total, 2, ',', ' '); ?> €)</strong>
+        </a>
+    </div>
     <?php endif; ?>
 </div>
 <?php
