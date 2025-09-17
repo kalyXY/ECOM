@@ -100,78 +100,22 @@ include 'includes/header.php';
 </div>
 
 <div class="container py-5">
-    <!-- Debug info (à supprimer en production) -->
-    <div class="alert alert-info mb-4">
-        <strong>État du panier :</strong> 
-        <?php echo count($items); ?> article(s) - 
-        Total: <?php echo number_format($total, 2, ',', ' '); ?> € - 
-        Quantité: <?php echo $itemCount; ?>
-        <?php if (!empty($items)): ?>
-            <br><strong>✅ Le bouton "Passer la commande" devrait être visible ci-dessous</strong>
-        <?php else: ?>
-            <br><strong>ℹ️ Ajoutez un produit pour voir le bouton de commande</strong>
-        <?php endif; ?>
-    </div>
-
-    <!-- BOUTON DE COMMANDE PRINCIPAL - TOUJOURS VISIBLE SI PANIER NON VIDE -->
-    <?php if (!empty($items)): ?>
-    <div class="emergency-checkout-btn mb-4">
-        <div class="alert alert-success p-4 text-center">
-            <h3 class="mb-3">
-                <i class="fas fa-shopping-cart me-2"></i>
-                Votre panier : <?php echo number_format($total, 2, ',', ' '); ?> €
-            </h3>
-            <a href="checkout.php" class="btn btn-success btn-lg px-5 py-3" style="font-size: 1.2rem; font-weight: bold;">
-                <i class="fas fa-credit-card me-2"></i>
-                🛒 PASSER LA COMMANDE MAINTENANT 🛒
-            </a>
-            <div class="mt-2">
-                <small class="text-muted">
-                    <i class="fas fa-lock me-1"></i>
-                    Paiement 100% sécurisé avec Lygos
-                </small>
-            </div>
-        </div>
-    </div>
+    <!-- Notifications (succès/erreur) -->
+    <?php if (!empty($message)): ?>
+      <div class="alert alert-<?php echo htmlspecialchars($messageType ?: 'info'); ?> mb-4">
+        <?php echo htmlspecialchars($message); ?>
+      </div>
     <?php endif; ?>
 
     <!-- En-tête du panier -->
-    <div class="cart-header text-center mb-5">
+
+    <div class="cart-header text-center mb-4">
         <h1 class="section-title">
             <i class="fas fa-shopping-cart me-3"></i>
             Mon Panier
         </h1>
-        <div class="cart-progress">
-            <div class="progress-steps d-flex justify-content-center align-items-center mt-4">
-                <div class="step active">
-                    <div class="step-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <span class="step-label">Panier</span>
-                </div>
-                <div class="step-separator"></div>
-                <div class="step">
-                    <div class="step-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <span class="step-label">Informations</span>
-                </div>
-                <div class="step-separator"></div>
-                <div class="step">
-                    <div class="step-icon">
-                        <i class="fas fa-credit-card"></i>
-                    </div>
-                    <span class="step-label">Paiement</span>
-                </div>
-                <div class="step-separator"></div>
-                <div class="step">
-                    <div class="step-icon">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <span class="step-label">Confirmation</span>
-                </div>
-            </div>
-        </div>
+        <!-- Étapes simplifiées pour une interface plus claire -->
+        <div class="small text-muted">Étape 1 sur 2 · Panier → Paiement</div>
         
         <?php if ($itemCount > 0): ?>
             <div class="cart-stats mt-4">
@@ -257,21 +201,13 @@ include 'includes/header.php';
                                 </div>
                             </div>
                             
-                            <!-- Bouton de test pour ajouter un produit -->
+                            <!-- CTA retour à la boutique -->
                             <div class="row mt-4">
                                 <div class="col-12 text-center">
-                                    <p class="text-muted mb-3">Ou testez le panier avec un produit d'exemple :</p>
-                                    <form method="POST" action="cart.php" style="display: inline-block;">
-                                        <input type="hidden" name="action" value="add">
-                                        <input type="hidden" name="id" value="999">
-                                        <input type="hidden" name="name" value="T-shirt Test">
-                                        <input type="hidden" name="price" value="29.99">
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn btn-outline-success">
-                                            <i class="fas fa-plus me-2"></i>
-                                            Ajouter un produit test
-                                        </button>
-                                    </form>
+                                    <a href="products.php" class="btn btn-primary">
+                                        <i class="fas fa-arrow-left me-2"></i>
+                                        Parcourir les produits
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -417,26 +353,7 @@ include 'includes/header.php';
                                 </div>
                             </div>
                             
-                            <!-- Bouton de commande principal (mobile) -->
-                            <div class="row mt-4 d-lg-none">
-                                <div class="col-12">
-                                    <div class="mobile-checkout-summary bg-light p-3 rounded mb-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="fw-bold">Total</span>
-                                            <span class="h5 text-primary mb-0"><?php echo number_format($total, 2, ',', ' '); ?> €</span>
-                                        </div>
-                                        <div class="small text-muted">
-                                            <i class="fas fa-truck me-1"></i>
-                                            Livraison gratuite incluse
-                                        </div>
-                                    </div>
-                                    <a href="checkout.php" class="btn btn-success btn-lg w-100 checkout-btn-mobile">
-                                        <i class="fas fa-shopping-cart me-2"></i>
-                                        <strong>PASSER LA COMMANDE</strong>
-                                        <div class="small mt-1">Paiement sécurisé</div>
-                                    </a>
-                                </div>
-                            </div>
+                            <!-- Rien ici: le bouton principal est dans le résumé à droite -->
                         </div>
                     </div>
                 </div>
@@ -503,37 +420,23 @@ include 'includes/header.php';
                                     </div>
                                 </div>
                                 
-                                <!-- Boutons d'action -->
+                                <!-- Bouton d'action principal -->
                                 <div class="summary-actions">
-                                    <a href="checkout.php" class="btn btn-success btn-lg w-100 mb-3 checkout-btn pulse-animation">
-                                        <i class="fas fa-shopping-cart me-2"></i>
-                                        <strong>PASSER LA COMMANDE</strong>
-                                        <small class="d-block mt-1">
-                                            <i class="fas fa-lock me-1"></i>
-                                            Paiement 100% sécurisé
-                                        </small>
+                                    <a href="checkout.php" class="btn btn-success btn-lg w-100 mb-2 checkout-btn">
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        <strong>Procéder au paiement</strong>
                                     </a>
                                     
-                                    <!-- Bouton alternatif plus discret -->
-                                    <div class="text-center mb-3">
+                                    <!-- Lien alternatif discret -->
+                                    <div class="text-center mb-2">
                                         <small class="text-muted">
                                             Ou continuez vos achats et
                                             <a href="products.php" class="text-decoration-none">découvrez plus de produits</a>
                                         </small>
                                     </div>
                                     
-                                    <!-- Options de paiement -->
-                                    <div class="payment-options">
-                                        <div class="payment-methods">
-                                            <small class="text-muted">Paiement sécurisé avec :</small>
-                                            <div class="payment-icons mt-2">
-                                                <img src="assets/images/payments/visa.png" alt="Visa" class="payment-icon">
-                                                <img src="assets/images/payments/mastercard.png" alt="Mastercard" class="payment-icon">
-                                                <img src="assets/images/payments/paypal.png" alt="PayPal" class="payment-icon">
-                                                <span class="badge bg-primary">Lygos</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <!-- Mentions sécurité -->
+                                    <div class="text-center small text-muted"><i class="fas fa-lock me-1"></i>Paiement sécurisé via Lygos</div>
                                 </div>
                                 
                                 <!-- Garanties -->
@@ -578,43 +481,10 @@ include 'includes/header.php';
         </div>
     <?php endif; ?>
     
-    <!-- BOUTON DE COMMANDE EN BAS DE PAGE - TRÈS VISIBLE -->
-    <?php if (!empty($items)): ?>
-    <div class="final-checkout-section py-5 bg-success text-white text-center">
-        <div class="container">
-            <h2 class="mb-3">
-                <i class="fas fa-check-circle me-2"></i>
-                Prêt à finaliser votre commande ?
-            </h2>
-            <p class="lead mb-4">
-                Total : <strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong> 
-                (<?php echo $itemCount; ?> article<?php echo $itemCount > 1 ? 's' : ''; ?>)
-            </p>
-            <a href="checkout.php" class="btn btn-warning btn-lg px-5 py-3" style="font-size: 1.3rem; font-weight: bold; color: #000;">
-                <i class="fas fa-arrow-right me-2"></i>
-                FINALISER MA COMMANDE
-                <i class="fas fa-arrow-left ms-2"></i>
-            </a>
-            <div class="mt-3">
-                <small>
-                    <i class="fas fa-shield-alt me-1"></i>
-                    Paiement sécurisé • Livraison gratuite • Retours gratuits
-                </small>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Bouton flottant pour mobile (seulement si panier non vide) -->
-    <div class="floating-checkout-btn d-lg-none">
-        <a href="checkout.php" class="btn btn-success btn-lg shadow-lg">
-            <i class="fas fa-shopping-cart me-2"></i>
-            <strong>Commander (<?php echo number_format($total, 2, ',', ' '); ?> €)</strong>
-        </a>
-    </div>
-    <?php endif; ?>
+    <!-- Fin contenu panier -->
 </div>
 <?php
 // Inclure le footer du site
 include 'includes/footer.php';
 ?>
-<script src="assets/js/cart-page.js"></script>
+

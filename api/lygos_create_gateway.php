@@ -52,8 +52,8 @@ $payload = [
     'amount' => $amountCents,
     'shop_name' => (isset($siteSettings['site_name']) ? $siteSettings['site_name'] : 'StyleHub Shop'),
     'message' => 'Commande #' . ($order['order_number'] ?? $orderId),
-    'success_url' => app_url('lygos_return.php?status=success&order_id=' . $orderId),
-    'failure_url' => app_url('lygos_return.php?status=failure&order_id=' . $orderId),
+    'success_url' => app_url('success.php?order_id=' . $orderId),
+    'failure_url' => app_url('fail.php?order_id=' . $orderId),
     'order_id' => (string)$orderId,
 ];
 
