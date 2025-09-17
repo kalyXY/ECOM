@@ -64,8 +64,8 @@ require_once __DIR__ . '/config/lygos.php';
                 'amount' => 100, // 1.00 EUR en centimes
                 'shop_name' => 'Test Shop',
                 'message' => 'Test de diagnostic',
-                'success_url' => app_url('lygos_return.php?status=success&order_id=test'),
-                'failure_url' => app_url('lygos_return.php?status=failure&order_id=test'),
+                'success_url' => app_url('success.php?order_id=test'),
+                'failure_url' => app_url('fail.php?order_id=test'),
                 'order_id' => 'diagnostic_' . time(),
             ];
             
