@@ -1,3 +1,4 @@
+.payment-logos img { width: 40px; height: 25px; border-radius: 4px; object-fit: cover; }
 /* Wishlist button styling on product detail page */
 .product-info .wishlist-btn {
     display: inline-flex;

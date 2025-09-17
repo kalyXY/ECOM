@@ -99,14 +99,14 @@ try {
         </div>
     </nav>
 
-<section class="py-5">
-    <div class="container">
+    <section class="py-5">
+        <div class="container">
         <div class="row gx-5">
             <div class="col-lg-6">
-                <?php
-                    $gallery = $images;
-                    if ($product['image_url']) { array_unshift($gallery, $product['image_url']); }
-                    $gallery = array_values(array_unique($gallery));
+                            <?php 
+                                $gallery = $images;
+                                if ($product['image_url']) { array_unshift($gallery, $product['image_url']); }
+                                $gallery = array_values(array_unique($gallery));
                 ?>
                 <div class="product-gallery">
                     <div class="product-main-image mb-3">
@@ -117,12 +117,12 @@ try {
                         <?php foreach ($gallery as $imgUrl): ?>
                             <img src="<?php echo htmlspecialchars($imgUrl); ?>" alt="Miniature produit" class="img-fluid rounded border">
                         <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
                 </div>
-            </div>
-
-            <div class="col-lg-6">
+                
+                <div class="col-lg-6">
                 <div class="product-details p-4 rounded shadow-sm bg-white">
                     <h1 class="product-detail-title"><?php echo htmlspecialchars($product['name']); ?></h1>
 
@@ -133,7 +133,7 @@ try {
                         <?php else: ?>
                             <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Épuisé</span>
                         <?php endif; ?>
-                    </div>
+                        </div>
 
                     <p class="product-detail-description mb-4"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
 
@@ -156,7 +156,7 @@ try {
                         <div class="row align-items-center mb-4">
                             <div class="col-auto">
                                 <h6 class="mb-0">Quantité :</h6>
-                            </div>
+                                </div>
                             <div class="col-auto">
                                 <div class="quantity-selector d-flex">
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="this.nextElementSibling.stepDown()">-</button>
@@ -179,13 +179,13 @@ try {
                                     title="<?php echo $inWishlist ? 'Retirer de la wishlist' : 'Ajouter à la wishlist'; ?>">
                                 <i class="<?php echo $inWishlist ? 'fas' : 'far'; ?> fa-heart me-2"></i><?php echo $inWishlist ? 'Retirer de la wishlist' : 'Ajouter à la wishlist'; ?>
                             </button>
-                        </div>
+                                </div>
                     </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- Produits similaires -->
     <?php if (!empty($similarProducts)): ?>

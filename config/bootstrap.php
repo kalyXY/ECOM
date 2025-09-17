@@ -13,6 +13,10 @@ require_once __DIR__ . '/security.php';
 
 // Charger la configuration de l'application
 require_once __DIR__ . '/app.php';
+// Charger config locale (ex: clés API) si présente
+if (file_exists(__DIR__ . '/local.php')) {
+    require __DIR__ . '/local.php';
+}
 
 // Charger la connexion à la base de données
 $pdo = require_once __DIR__ . '/database.php';

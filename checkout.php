@@ -98,11 +98,8 @@ try {
 
     $pdo->commit();
 
-    // Clear cart and redirect to order details
-    $_SESSION['cart'] = [];
-    $_SESSION['message'] = 'Commande créée avec succès.';
-    $_SESSION['message_type'] = 'success';
-    header('Location: orders.php?id=' . $orderId);
+    // Redirect customer to payment with Lygos
+    header('Location: pay_with_lygos.php?order_id=' . $orderId);
     exit;
 } catch (Exception $e) {
     if ($pdo->inTransaction()) { $pdo->rollBack(); }

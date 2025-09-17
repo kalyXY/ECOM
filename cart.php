@@ -115,7 +115,7 @@ include 'includes/header.php';
                     <div class="cart-items">
                         <?php foreach ($items as $id => $item): ?>
                             <div class="cart-item d-flex align-items-center gap-4 p-3 mb-3 border rounded">
-                                <img src="assets/images/placeholder.png" alt="<?php echo htmlspecialchars($item['name']); ?>" style="width: 100px; height: 100px; object-fit: cover;" class="rounded">
+                                <img src="assets/images/placeholder.svg" alt="<?php echo htmlspecialchars($item['name']); ?>" style="width: 100px; height: 100px; object-fit: cover;" class="rounded">
                                 <div class="flex-grow-1">
                                     <h5 class="mb-1"><?php echo htmlspecialchars($item['name']); ?></h5>
                                     <span class="text-primary fw-bold"><?php echo number_format($item['price'], 2, ',', ' '); ?> €</span>

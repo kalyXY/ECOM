@@ -1,1 +1,37 @@
-a:2:{s:5:"value";a:5:{s:8:"products";a:1:{i:0;a:47:{s:2:"id";i:5;s:4:"name";s:21:"VESTE FEMIRE DE SIGNE";s:4:"slug";s:21:"veste-femire-de-signe";s:11:"description";s:30:"DUEUE EUEUUE EUEIE EIEIE EIEIE";s:17:"short_description";N;s:3:"sku";s:8:"PRD43762";s:7:"barcode";N;s:5:"price";s:5:"12.00";s:10:"sale_price";N;s:10:"cost_price";N;s:5:"stock";i:12;s:9:"min_stock";i:0;s:9:"max_stock";N;s:12:"stock_status";s:8:"in_stock";s:12:"manage_stock";i:1;s:11:"category_id";N;s:8:"brand_id";N;s:5:"brand";N;s:5:"color";N;s:4:"size";N;s:6:"weight";N;s:10:"dimensions";N;s:8:"material";N;s:17:"care_instructions";N;s:6:"gender";s:7:"unisexe";s:6:"season";s:12:"toute_saison";s:9:"age_group";s:5:"adult";s:9:"image_url";s:44:"uploads/f593e0c6bbbe324460e0b204aa82beed.jpg";s:7:"gallery";s:193:"["uploads\/f593e0c6bbbe324460e0b204aa82beed.jpg","uploads\/fa8de08906d10fc85bf2da6bcc10cb68.jpg","uploads\/288eaa48bba571200f12ec913ec31fef.jpg","uploads\/5ffad423fa6b653532d6e939a655f09e.png"]";s:4:"tags";N;s:10:"meta_title";N;s:16:"meta_description";N;s:13:"meta_keywords";N;s:6:"status";s:6:"active";s:10:"visibility";s:7:"visible";s:8:"featured";i:0;s:10:"view_count";i:0;s:14:"purchase_count";i:0;s:14:"rating_average";s:4:"0.00";s:12:"rating_count";i:0;s:6:"rating";s:4:"0.00";s:14:"available_from";N;s:15:"available_until";N;s:10:"created_at";s:19:"2025-09-16 10:55:03";s:10:"updated_at";s:19:"2025-09-16 10:55:03";s:13:"category_name";N;s:13:"category_slug";N;}}s:5:"total";i:1;s:5:"pages";d:1;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1758014312;}
+a:2:{s:5:"value";a:5:{s:8:"products";a:2:{i:0;a:47:{s:2:"id";i:7;s:4:"name";s:10:"Veste Gaff";s:4:"slug";s:10:"veste-gaff";s:11:"description";s:1054:"Adoptez un style fonctionnel sans compromis sur l’élégance avec la veste Gaff. Conçue pour ceux qui veulent allier robustesse et design épuré, cette pièce noire est le must-have de votre garde-robe utilitaire.
+
+Détails &amp; caractéristiques :
+
+Couleur : noir profond, mat, finition sobre
+
+Tissu : toile lourde ou mélange coton / polyester premium, résistant à l’usure
+
+Coupe : droite, légèrement boxy, pour plus de liberté de mouvement
+
+Fermeture : boutons métalliques solides ou zip frontal compact
+
+Poches :
+  • 2 poches poitrine plaquées avec rabat
+  • 2 poches latérales à hauteur des hanches
+  • Option poche intérieure pour l’essentiel (téléphone, portefeuille)
+
+Col : col classique ou col officier selon version
+
+Finitions : coutures renforcées, surpiqûres visibles, boutons / zip de qualité
+
+Utilisation :
+Polyvalente, elle s’intègre parfaitement à un look urbain ou de travail léger. Portez-la par-dessus un tee-shirt ou layering avec sweat pour les soirées fraîches.";s:17:"short_description";N;s:3:"sku";s:8:"PRD20453";s:7:"barcode";N;s:5:"price";s:5:"90.00";s:10:"sale_price";s:5:"85.00";s:10:"cost_price";N;s:5:"stock";i:100;s:9:"min_stock";i:0;s:9:"max_stock";N;s:12:"stock_status";s:8:"in_stock";s:12:"manage_stock";i:1;s:11:"category_id";i:1;s:8:"brand_id";N;s:5:"brand";N;s:5:"color";N;s:4:"size";N;s:6:"weight";N;s:10:"dimensions";N;s:8:"material";N;s:17:"care_instructions";N;s:6:"gender";s:5:"femme";s:6:"season";s:12:"toute_saison";s:9:"age_group";s:5:"adult";s:9:"image_url";s:44:"uploads/bac5570c7cae8ca8c9cd7c90b93f2841.jpg";s:7:"gallery";s:193:"["uploads\/bac5570c7cae8ca8c9cd7c90b93f2841.jpg","uploads\/eff58051523502b2e419e64ba4c832e9.jpg","uploads\/928452aa367e55a6c7412280728a3ac8.jpg","uploads\/c7c41326b3dec55d77a079161c1e1bd5.jpg"]";s:4:"tags";N;s:10:"meta_title";N;s:16:"meta_description";N;s:13:"meta_keywords";N;s:6:"status";s:6:"active";s:10:"visibility";s:7:"visible";s:8:"featured";i:0;s:10:"view_count";i:0;s:14:"purchase_count";i:0;s:14:"rating_average";s:4:"0.00";s:12:"rating_count";i:0;s:6:"rating";s:4:"0.00";s:14:"available_from";N;s:15:"available_until";N;s:10:"created_at";s:19:"2025-09-16 12:55:06";s:10:"updated_at";s:19:"2025-09-16 12:55:06";s:13:"category_name";s:5:"Femme";s:13:"category_slug";s:5:"femme";}i:1;a:47:{s:2:"id";i:6;s:4:"name";s:16:"Veste Black Work";s:4:"slug";s:16:"veste-black-work";s:11:"description";s:922:"Veste Black Work – Style utilitaire &amp; minimaliste
+
+Optez pour un look intemporel avec notre **veste Black Work**, inspirée du workwear et pensée pour allier **confort, durabilité et élégance**.
+Confectionnée dans un tissu robuste, elle se distingue par sa **coupe droite et polyvalente**, idéale pour toutes les occasions – du quotidien décontracté aux sorties stylées.
+
+Caractéristiques :
+
+* Couleur : noir intense pour un style sobre et moderne
+* Fermeture : boutons/zip (selon le modèle)
+* Poches pratiques : poitrine et côtés pour allier esthétique &amp; fonctionnalité
+* Matière : tissu résistant (coton premium ou toile robuste)
+* Coupe : inspirée workwear, droite et confortable
+
+Pourquoi l’adopter ?
+Cette veste est la pièce parfaite pour compléter vos tenues streetwear ou casual. Facile à associer, elle apporte une touche élégante sans perdre son esprit pratique.";s:17:"short_description";N;s:3:"sku";s:8:"PRD13217";s:7:"barcode";N;s:5:"price";s:5:"80.00";s:10:"sale_price";s:5:"75.00";s:10:"cost_price";N;s:5:"stock";i:20;s:9:"min_stock";i:0;s:9:"max_stock";N;s:12:"stock_status";s:8:"in_stock";s:12:"manage_stock";i:1;s:11:"category_id";N;s:8:"brand_id";N;s:5:"brand";N;s:5:"color";N;s:4:"size";N;s:6:"weight";N;s:10:"dimensions";N;s:8:"material";N;s:17:"care_instructions";N;s:6:"gender";s:7:"unisexe";s:6:"season";s:12:"toute_saison";s:9:"age_group";s:5:"adult";s:9:"image_url";s:44:"uploads/a2ab867d667a5d79181bcb276d722009.jpg";s:7:"gallery";s:241:"["uploads\/a2ab867d667a5d79181bcb276d722009.jpg","uploads\/64f1af32dc452b2cf3c54472807c7ef7.jpg","uploads\/43f051858de38028cb75e14ff504e592.jpg","uploads\/546e093eb315f410bab1fdaf9a1b190f.jpg","uploads\/03591730ccb7b9ba2b2c88b95c473ba8.jpg"]";s:4:"tags";N;s:10:"meta_title";N;s:16:"meta_description";N;s:13:"meta_keywords";N;s:6:"status";s:6:"active";s:10:"visibility";s:7:"visible";s:8:"featured";i:0;s:10:"view_count";i:0;s:14:"purchase_count";i:0;s:14:"rating_average";s:4:"0.00";s:12:"rating_count";i:0;s:6:"rating";s:4:"0.00";s:14:"available_from";N;s:15:"available_until";N;s:10:"created_at";s:19:"2025-09-16 12:45:50";s:10:"updated_at";s:19:"2025-09-16 12:45:50";s:13:"category_name";N;s:13:"category_slug";N;}}s:5:"total";i:2;s:5:"pages";d:1;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1758033556;}

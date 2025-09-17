@@ -1,9 +1,1 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-a:2:{s:5:"value";a:5:{s:8:"products";a:0:{}s:5:"total";i:0;s:5:"pages";d:0;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1758010011;}
-=======
-a:2:{s:5:"value";a:5:{s:8:"products";a:0:{}s:5:"total";i:0;s:5:"pages";d:0;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1757945864;}
->>>>>>> 66f96d6 (Update cache expiration timestamps for improved cache management.)
-=======
-a:2:{s:5:"value";a:5:{s:8:"products";a:0:{}s:5:"total";i:0;s:5:"pages";d:0;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1757945864;}
->>>>>>> 66f96d60e8e0bfb93e628d645af5290db50bf1cb
+a:2:{s:5:"value";a:5:{s:8:"products";a:0:{}s:5:"total";i:0;s:5:"pages";d:0;s:12:"current_page";i:1;s:8:"per_page";i:12;}s:7:"expires";i:1758033530;}

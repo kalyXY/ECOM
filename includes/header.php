@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/bootstrap.php'; // Adjusted path
-$siteSettings = getSiteSettings(); // This function seems to be missing, I will assume it exists somewhere
+// Charger les helpers front (getSiteSettings, etc.)
+require_once __DIR__ . '/config.php';
+$siteSettings = getSiteSettings();
 $cartCount = getCartItemCount();
 $wishlistCount = getWishlistItemCount();
 ?>

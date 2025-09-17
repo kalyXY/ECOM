@@ -116,10 +116,10 @@
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <div class="d-flex justify-content-md-end gap-3">
-                        <img src="https://via.placeholder.com/40x25/007bff/ffffff?text=VISA" alt="Visa" class="rounded">
-                        <img src="https://via.placeholder.com/40x25/ff6b35/ffffff?text=MC" alt="Mastercard" class="rounded">
-                        <img src="https://via.placeholder.com/40x25/00457c/ffffff?text=PP" alt="PayPal" class="rounded">
+                    <div class="d-flex justify-content-md-end gap-3 payment-logos">
+                        <img src="assets/images/payments/visa.png" alt="Visa">
+                        <img src="assets/images/payments/mastercard.png" alt="Mastercard">
+                        <img src="assets/images/payments/paypal.png" alt="PayPal">
                     </div>
                 </div>
             </div>

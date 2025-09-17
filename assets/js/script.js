@@ -12,7 +12,7 @@ async function toggleWishlistAjax(productId, buttonElement) {
         window.location.href = 'login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
         return;
     }
-
+    
     const icon = buttonElement.querySelector('i');
     const isAdding = icon.classList.contains('far');
 

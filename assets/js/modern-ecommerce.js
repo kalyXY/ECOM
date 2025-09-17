@@ -15,7 +15,10 @@ class StyleHubApp {
         this.updateCartCounter();
         this.initLazyLoading();
         this.initSearchSuggestions();
-        this.initProductQuickView();
+        // Quick view may be optional in some pages
+        if (typeof this.initProductQuickView === 'function') {
+            this.initProductQuickView();
+        }
         this.initNotifications();
     }
 
