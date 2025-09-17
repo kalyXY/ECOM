@@ -215,81 +215,292 @@ $bodyClass = 'products-page';
         
         <!-- Zone des produits -->
         <main class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded shadow-sm bg-white">
-                <div>
-                    <h4 class="mb-0"><?php echo htmlspecialchars($pageTitle); ?></h4>
-                    <p class="text-muted mb-0"><?php echo number_format($totalProducts); ?> produit(s)</p>
+            <!-- En-tête de la section produits -->
+            <div class="products-header bg-white rounded-lg shadow-sm p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h1 class="section-title mb-2"><?php echo htmlspecialchars($pageTitle); ?></h1>
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="fas fa-tag me-2"></i>
+                            <span><?php echo number_format($totalProducts); ?> produit<?php echo $totalProducts > 1 ? 's' : ''; ?> trouvé<?php echo $totalProducts > 1 ? 's' : ''; ?></span>
+                            <?php if (!empty($filters['search'])): ?>
+                                <span class="ms-2">pour "<strong><?php echo htmlspecialchars($filters['search']); ?></strong>"</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center justify-content-md-end mt-3 mt-md-0">
+                            <!-- Tri -->
+                            <div class="me-3">
+                                <label class="form-label mb-1 small text-muted">Trier par</label>
+                                <select name="sort" class="form-select form-select-sm" id="sortSelect" style="width: 200px;">
+                                    <option value="newest" <?php echo ($filters['sort'] ?? 'newest') === 'newest' ? 'selected' : ''; ?>>
+                                        <i class="fas fa-clock me-1"></i>Plus récents
+                                    </option>
+                                    <option value="price_asc" <?php echo ($filters['sort'] ?? '') === 'price_asc' ? 'selected' : ''; ?>>
+                                        <i class="fas fa-arrow-up me-1"></i>Prix croissant
+                                    </option>
+                                    <option value="price_desc" <?php echo ($filters['sort'] ?? '') === 'price_desc' ? 'selected' : ''; ?>>
+                                        <i class="fas fa-arrow-down me-1"></i>Prix décroissant
+                                    </option>
+                                    <option value="popularity" <?php echo ($filters['sort'] ?? '') === 'popularity' ? 'selected' : ''; ?>>
+                                        <i class="fas fa-fire me-1"></i>Popularité
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <!-- Vue -->
+                            <div>
+                                <label class="form-label mb-1 small text-muted">Affichage</label>
+                                <div class="view-toggle btn-group d-block">
+                                    <button class="btn btn-outline-primary btn-sm active" data-view="grid" title="Vue grille">
+                                        <i class="fas fa-th"></i>
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" data-view="list" title="Vue liste">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="d-flex align-items-center">
-                    <select name="sort" class="form-select form-select-sm me-2" id="sortSelect" style="width: auto;">
-                        <option value="newest" <?php echo ($filters['sort'] ?? 'newest') === 'newest' ? 'selected' : ''; ?>>Plus récents</option>
-                        <option value="price_asc" <?php echo ($filters['sort'] ?? '') === 'price_asc' ? 'selected' : ''; ?>>Prix croissant</option>
-                        <option value="price_desc" <?php echo ($filters['sort'] ?? '') === 'price_desc' ? 'selected' : ''; ?>>Prix décroissant</option>
-                        <option value="popularity" <?php echo ($filters['sort'] ?? '') === 'popularity' ? 'selected' : ''; ?>>Popularité</option>
-                    </select>
-                    <div class="view-toggle btn-group">
-                        <button class="btn btn-outline-secondary btn-sm active" data-view="grid"><i class="fas fa-th"></i></button>
-                        <button class="btn btn-outline-secondary btn-sm" data-view="list"><i class="fas fa-list"></i></button>
+                <!-- Filtres actifs -->
+                <?php if (!empty(array_filter($filters))): ?>
+                <div class="active-filters mt-3 pt-3 border-top">
+                    <div class="d-flex align-items-center flex-wrap">
+                        <span class="me-2 small text-muted">Filtres actifs:</span>
+                        <?php foreach ($filters as $key => $value): ?>
+                            <?php if (!empty($value) && !in_array($key, ['sort', 'page'])): ?>
+                                <span class="badge bg-primary me-2 mb-1">
+                                    <?php 
+                                    $labels = [
+                                        'search' => 'Recherche',
+                                        'category' => 'Catégorie',
+                                        'gender' => 'Genre',
+                                        'brand' => 'Marque',
+                                        'color' => 'Couleur',
+                                        'size' => 'Taille',
+                                        'min_price' => 'Prix min',
+                                        'max_price' => 'Prix max'
+                                    ];
+                                    echo ($labels[$key] ?? ucfirst($key)) . ': ' . htmlspecialchars($value);
+                                    ?>
+                                    <button type="button" class="btn-close btn-close-white ms-1" 
+                                            onclick="removeFilter('<?php echo $key; ?>')" style="font-size: 0.7em;"></button>
+                                </span>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <button class="btn btn-link btn-sm text-danger p-0 ms-2" onclick="clearAllFilters()">
+                            <i class="fas fa-times me-1"></i>Effacer tout
+                        </button>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
             
-            <div class="products-grid" id="productsGrid">
+            <!-- Grille des produits -->
+            <div class="products-container" id="productsContainer">
                 <?php if (empty($products)): ?>
-                    <div class="text-center p-5 bg-white rounded shadow-sm">
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h5>Aucun produit ne correspond à votre recherche</h5>
-                        <p class="text-muted">Essayez de modifier vos filtres ou de réinitialiser la recherche.</p>
-                        <button class="btn btn-primary" onclick="clearAllFilters()">Voir tous les produits</button>
+                    <!-- État vide -->
+                    <div class="empty-state bg-white rounded-lg shadow-sm p-5 text-center">
+                        <div class="empty-state-icon mb-4">
+                            <i class="fas fa-search fa-4x text-muted"></i>
+                        </div>
+                        <h3 class="mb-3">Aucun produit trouvé</h3>
+                        <p class="text-muted mb-4">
+                            <?php if (!empty($filters['search'])): ?>
+                                Aucun produit ne correspond à votre recherche "<strong><?php echo htmlspecialchars($filters['search']); ?></strong>".
+                            <?php else: ?>
+                                Aucun produit ne correspond aux filtres sélectionnés.
+                            <?php endif; ?>
+                        </p>
+                        <div class="empty-state-actions">
+                            <button class="btn btn-primary me-2" onclick="clearAllFilters()">
+                                <i class="fas fa-refresh me-2"></i>Voir tous les produits
+                            </button>
+                            <a href="index.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>Retour à l'accueil
+                            </a>
+                        </div>
                     </div>
                 <?php else: ?>
-                    <div class="row g-4">
-                        <?php foreach ($products as $product): ?>
-                            <div class="col-sm-6 col-md-4">
-                                <div class="product-card h-100" onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
-                                    <div class="product-image-container">
-                                        <img src="<?php echo htmlspecialchars($product['image_url'] ?? 'assets/images/placeholder.png'); ?>"
-                                             class="product-image" alt="<?php echo htmlspecialchars($product['name']); ?>" loading="lazy">
-                                        <div class="product-badge">
-                                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
-                                                <span class="badge-sale">-<?php echo round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>%</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php
-                                        $inWishlist = isProductInWishlist($product['id']);
-                                        ?>
-                                        <button class="wishlist-btn <?php echo $inWishlist ? 'active' : ''; ?>"
-                                                onclick="event.stopPropagation(); toggleWishlistAjax(<?php echo $product['id']; ?>, this)"
-                                                title="<?php echo $inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
-                                            <i class="<?php echo $inWishlist ? 'fas' : 'far'; ?> fa-heart"></i>
-                                        </button>
+                    <!-- Grille des produits -->
+                    <div class="products-grid row g-4" id="productsGrid">
+                        <?php foreach ($products as $index => $product): ?>
+                            <div class="col-6 col-md-4 col-lg-4 product-col">
+                                <div class="product-card h-100 animate-fade-in-up" 
+                                     style="animation-delay: <?php echo ($index % 12) * 0.1; ?>s;"
+                                     onclick="location.href='product.php?id=<?php echo $product['id']; ?>'">
+                                     
+                                    <!-- Badges -->
+                                    <div class="product-badge">
+                                        <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                            <?php $discount = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>
+                                            <span class="badge-sale">-<?php echo $discount; ?>%</span>
+                                        <?php endif; ?>
+                                        <?php if (strtotime($product['created_at']) > strtotime('-7 days')): ?>
+                                            <span class="badge-new">Nouveau</span>
+                                        <?php endif; ?>
+                                        <?php if ($product['featured']): ?>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-star me-1"></i>Coup de cœur
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
+                                    
+                                    <!-- Bouton wishlist -->
+                                    <?php $inWishlist = isProductInWishlist($product['id']); ?>
+                                    <button class="wishlist-btn <?php echo $inWishlist ? 'active' : ''; ?>"
+                                            onclick="event.stopPropagation(); toggleWishlist(<?php echo $product['id']; ?>)"
+                                            title="<?php echo $inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
+                                        <i class="<?php echo $inWishlist ? 'fas' : 'far'; ?> fa-heart"></i>
+                                    </button>
+                                    
+                                    <!-- Image du produit -->
+                                    <div class="product-image-container">
+                                        <?php if ($product['image_url'] && file_exists($product['image_url'])): ?>
+                                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
+                                                 class="product-image" 
+                                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                 loading="lazy">
+                                        <?php else: ?>
+                                            <div class="product-image d-flex align-items-center justify-content-center bg-light">
+                                                <i class="fas fa-tshirt fa-3x text-muted"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Overlay avec actions rapides -->
+                                        <div class="product-overlay">
+                                            <div class="product-actions">
+                                                <button class="btn btn-light btn-sm me-2" 
+                                                        onclick="event.stopPropagation(); quickView(<?php echo $product['id']; ?>)"
+                                                        title="Vue rapide">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-light btn-sm" 
+                                                        onclick="event.stopPropagation(); compareProduct(<?php echo $product['id']; ?>)"
+                                                        title="Comparer">
+                                                    <i class="fas fa-balance-scale"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Informations du produit -->
                                     <div class="product-info">
-                                        <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
-                                        <div class="product-price-container">
-                                            <span class="product-price"><?php echo App::formatPrice($product['sale_price'] ?: $product['price']); ?></span>
-                                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
-                                                <span class="product-original-price"><?php echo App::formatPrice($product['price']); ?></span>
+                                        <!-- Marque et catégorie -->
+                                        <div class="product-meta mb-2">
+                                            <?php if ($product['brand']): ?>
+                                                <span class="product-brand"><?php echo htmlspecialchars($product['brand']); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($product['category_name']): ?>
+                                                <span class="product-category text-muted">
+                                                    <?php echo htmlspecialchars($product['category_name']); ?>
+                                                </span>
                                             <?php endif; ?>
                                         </div>
+                                        
+                                        <!-- Nom du produit -->
+                                        <h5 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h5>
+                                        
+                                        <!-- Évaluation (si disponible) -->
+                                        <?php if (isset($product['rating']) && $product['rating'] > 0): ?>
+                                            <div class="product-rating mb-2">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <i class="fas fa-star <?php echo $i <= $product['rating'] ? 'text-warning' : 'text-muted'; ?>"></i>
+                                                <?php endfor; ?>
+                                                <span class="rating-count text-muted ms-1">
+                                                    (<?php echo $product['review_count'] ?? 0; ?>)
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Prix -->
+                                        <div class="product-price-container mb-3">
+                                            <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                                                <span class="product-price"><?php echo formatPrice($product['sale_price']); ?></span>
+                                                <span class="product-original-price"><?php echo formatPrice($product['price']); ?></span>
+                                            <?php else: ?>
+                                                <span class="product-price"><?php echo formatPrice($product['price']); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Attributs produit -->
+                                        <div class="product-attributes mb-3">
+                                            <?php if ($product['color']): ?>
+                                                <span class="product-attribute">
+                                                    <i class="fas fa-palette me-1"></i>
+                                                    <?php echo htmlspecialchars($product['color']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if ($product['size']): ?>
+                                                <span class="product-attribute">
+                                                    <i class="fas fa-ruler me-1"></i>
+                                                    <?php echo htmlspecialchars($product['size']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Stock et livraison -->
+                                        <div class="product-status mb-3">
+                                            <?php if ($product['stock'] > 0): ?>
+                                                <div class="stock-status text-success">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    En stock (<?php echo $product['stock']; ?>)
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="stock-status text-danger">
+                                                    <i class="fas fa-times-circle me-1"></i>
+                                                    Rupture de stock
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="shipping-info text-muted small">
+                                                <i class="fas fa-truck me-1"></i>
+                                                Livraison gratuite dès 50€
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Bouton d'ajout au panier -->
                                         <div class="mt-auto">
-                                            <form method="POST" action="cart.php" onClick="event.stopPropagation();">
-                                                <input type="hidden" name="action" value="add">
-                                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
-                                                <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn btn-primary w-100">
-                                                Ajouter au panier
-                                            </button>
-                                            </form>
+                                            <?php if ($product['stock'] > 0): ?>
+                                                <form method="POST" action="cart.php" class="add-to-cart-form" onClick="event.stopPropagation();">
+                                                    <input type="hidden" name="action" value="add">
+                                                    <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                                    <input type="hidden" name="name" value="<?php echo htmlspecialchars($product['name']); ?>">
+                                                    <input type="hidden" name="price" value="<?php echo (float)($product['sale_price'] ?: $product['price']); ?>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-add-to-cart w-100">
+                                                        <i class="fas fa-shopping-cart me-2"></i>
+                                                        Ajouter au panier
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <button class="btn btn-outline-secondary w-100" disabled>
+                                                    <i class="fas fa-times me-2"></i>
+                                                    Indisponible
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    
+                    <!-- Bouton "Voir plus" pour pagination infinie -->
+                    <?php if ($totalPages > $page): ?>
+                        <div class="text-center mt-5">
+                            <button class="btn btn-outline-primary btn-lg" id="loadMoreBtn" 
+                                    data-page="<?php echo $page + 1; ?>" data-total="<?php echo $totalPages; ?>">
+                                <i class="fas fa-plus me-2"></i>
+                                Voir plus de produits
+                                <span class="badge bg-primary ms-2"><?php echo ($totalProducts - ($page * $perPage)); ?> restants</span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
             
@@ -308,4 +519,372 @@ $bodyClass = 'products-page';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php
+$pageScripts = '
+<script>
+// Fonctionnalités pour la page des produits
+document.addEventListener("DOMContentLoaded", function() {
+    // Gestion des filtres
+    setupFilters();
+    
+    // Gestion du tri
+    setupSorting();
+    
+    // Gestion des vues (grille/liste)
+    setupViewToggle();
+    
+    // Pagination infinie
+    setupInfiniteScroll();
+    
+    // Fonctionnalités produits
+    setupProductFeatures();
+});
+
+function setupFilters() {
+    const filterInputs = document.querySelectorAll(".product-filter");
+    
+    filterInputs.forEach(input => {
+        input.addEventListener("change", function() {
+            applyFilters();
+        });
+    });
+    
+    // Range slider pour les prix
+    const priceRange = document.getElementById("priceRange");
+    if (priceRange) {
+        priceRange.addEventListener("input", debounce(applyFilters, 500));
+    }
+}
+
+function setupSorting() {
+    const sortSelect = document.getElementById("sortSelect");
+    if (sortSelect) {
+        sortSelect.addEventListener("change", function() {
+            applyFilters();
+        });
+    }
+}
+
+function setupViewToggle() {
+    const viewButtons = document.querySelectorAll(".view-toggle button");
+    const productsGrid = document.getElementById("productsGrid");
+    
+    viewButtons.forEach(button => {
+        button.addEventListener("click", function() {
+            const view = this.dataset.view;
+            
+            // Update active button
+            viewButtons.forEach(btn => btn.classList.remove("active"));
+            this.classList.add("active");
+            
+            // Update grid layout
+            if (view === "list") {
+                productsGrid.classList.add("products-list-view");
+                productsGrid.querySelectorAll(".product-col").forEach(col => {
+                    col.classList.remove("col-6", "col-md-4", "col-lg-4");
+                    col.classList.add("col-12");
+                });
+            } else {
+                productsGrid.classList.remove("products-list-view");
+                productsGrid.querySelectorAll(".product-col").forEach(col => {
+                    col.classList.remove("col-12");
+                    col.classList.add("col-6", "col-md-4", "col-lg-4");
+                });
+            }
+            
+            // Store preference
+            localStorage.setItem("productsView", view);
+        });
+    });
+    
+    // Restore saved view
+    const savedView = localStorage.getItem("productsView");
+    if (savedView) {
+        const button = document.querySelector(`[data-view="${savedView}"]`);
+        if (button) button.click();
+    }
+}
+
+function setupInfiniteScroll() {
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (!loadMoreBtn) return;
+    
+    loadMoreBtn.addEventListener("click", async function() {
+        const page = parseInt(this.dataset.page);
+        const total = parseInt(this.dataset.total);
+        
+        try {
+            this.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Chargement...`;
+            this.disabled = true;
+            
+            const url = new URL(window.location);
+            url.searchParams.set("page", page);
+            url.searchParams.set("ajax", "1");
+            
+            const response = await fetch(url.toString());
+            const html = await response.text();
+            
+            // Parse the response and extract products
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newProducts = doc.querySelectorAll(".product-col");
+            
+            // Add new products with animation
+            const productsGrid = document.getElementById("productsGrid");
+            newProducts.forEach((product, index) => {
+                product.style.animationDelay = `${index * 0.1}s`;
+                product.classList.add("animate-fade-in-up");
+                productsGrid.appendChild(product);
+            });
+            
+            // Update button
+            if (page >= total) {
+                this.style.display = "none";
+            } else {
+                this.dataset.page = page + 1;
+                this.innerHTML = `<i class="fas fa-plus me-2"></i>Voir plus de produits`;
+                this.disabled = false;
+            }
+            
+        } catch (error) {
+            this.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>Erreur de chargement`;
+            setTimeout(() => {
+                this.innerHTML = `<i class="fas fa-plus me-2"></i>Voir plus de produits`;
+                this.disabled = false;
+            }, 3000);
+        }
+    });
+}
+
+function setupProductFeatures() {
+    // Vue rapide
+    window.quickView = function(productId) {
+        if (window.modernEcommerce && window.modernEcommerce.openQuickView) {
+            window.modernEcommerce.openQuickView(productId);
+        }
+    };
+    
+    // Comparaison de produits
+    window.compareProduct = function(productId) {
+        // À implémenter selon vos besoins
+        console.log("Compare product:", productId);
+    };
+}
+
+function applyFilters() {
+    const form = document.getElementById("filtersForm");
+    const formData = new FormData(form);
+    const sortSelect = document.getElementById("sortSelect");
+    
+    // Add sort parameter
+    if (sortSelect) {
+        formData.set("sort", sortSelect.value);
+    }
+    
+    // Build URL with parameters
+    const url = new URL(window.location.href.split("?")[0], window.location.origin);
+    for (const [key, value] of formData.entries()) {
+        if (value) {
+            url.searchParams.set(key, value);
+        }
+    }
+    
+    // Navigate to filtered results
+    window.location.href = url.toString();
+}
+
+function clearAllFilters() {
+    window.location.href = window.location.href.split("?")[0];
+}
+
+function removeFilter(filterName) {
+    const url = new URL(window.location);
+    url.searchParams.delete(filterName);
+    window.location.href = url.toString();
+}
+
+// Utility functions
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Mobile filters toggle
+function toggleMobileFilters() {
+    const sidebar = document.querySelector(".filters-sidebar");
+    const overlay = document.querySelector(".filters-overlay");
+    
+    if (sidebar && overlay) {
+        sidebar.classList.toggle("show");
+        overlay.classList.toggle("show");
+    }
+}
+</script>
+
+<style>
+/* Styles supplémentaires pour la page produits */
+.products-header {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+}
+
+.section-title {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.active-filters .badge {
+    transition: all 0.2s ease;
+}
+
+.active-filters .badge:hover {
+    transform: scale(1.05);
+}
+
+.empty-state-icon {
+    animation: pulse 2s infinite;
+}
+
+.product-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.product-brand {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.product-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.product-attributes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.product-attribute {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.stock-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.shipping-info {
+    margin-top: 0.25rem;
+}
+
+.products-list-view .product-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.products-list-view .product-image-container {
+    width: 200px;
+    min-width: 200px;
+    margin-right: 1rem;
+    margin-bottom: 0;
+}
+
+.products-list-view .product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    .filters-sidebar {
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 300px;
+        height: 100vh;
+        background: white;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+    }
+    
+    .filters-sidebar.show {
+        left: 0;
+    }
+    
+    .filters-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .filters-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .products-list-view .product-card {
+        flex-direction: column;
+    }
+    
+    .products-list-view .product-image-container {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+}
+</style>
+';
+
+include 'includes/footer.php'; ?>

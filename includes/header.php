@@ -30,7 +30,12 @@ $wishlistCount = getWishlistItemCount();
     <!-- Custom CSS -->
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/custom-style.css" rel="stylesheet">
-    <link href="assets/css/custom-style.css" rel="stylesheet">
+    <link href="assets/css/modern-enhancements.css" rel="stylesheet">
+    
+    <!-- Styles spécifiques à la page -->
+    <?php if (isset($pageStyles)): ?>
+        <?php echo $pageStyles; ?>
+    <?php endif; ?>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
