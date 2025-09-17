@@ -57,6 +57,12 @@ if (empty($LYGOS_API_KEY)) {
     }
 }
 
+// Redirection serveur immédiate si URL de paiement disponible
+if (!empty($paymentUrl)) {
+    header('Location: ' . $paymentUrl);
+    exit;
+}
+
 include 'includes/header.php';
 ?>
 
